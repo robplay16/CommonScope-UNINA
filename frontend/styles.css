@@ -1,0 +1,67 @@
+/*
+  Foglio di stile minimale.
+  Obiettivo: avere una GUI leggibile e pulita, non una UI finale.
+*/
+:root {
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --border: #d8e0eb;
+  --text: #1f2a37;
+  --muted: #607086;
+  --accent: #2f6fed;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.topbar {
+  padding: 24px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { margin: 0 0 6px 0; }
+.topbar p { margin: 0; color: var(--muted); }
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  padding: 24px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+.card.wide { grid-column: span 2; }
+button {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+textarea, input {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+ul { padding-left: 18px; }
+.result {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.score {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
