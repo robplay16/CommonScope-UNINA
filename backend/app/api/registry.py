@@ -7,6 +7,7 @@ router = APIRouter()
 # Registry = catalogo dei tool.
 # Oggi legge da TOOLS in memoria.
 # Domani potrà leggere da un database vero.
+#setup iniziale 
 
 @router.get("/tools")
 def list_tools():
