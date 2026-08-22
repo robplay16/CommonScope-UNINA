@@ -1,48 +1,28 @@
+import json
+import os
+from typing import List
 from app.models.tool import ToolRecord
 
-# Questo file simula un database.
-# TOOLS contiene i tool concreti caricati nel prototipo.
-# Differenza chiave:
-# - ToolRecord (tool.py) = schema della carta di identità
-# - TOOLS (qui) = carte di identità reali già compilate
-TOOLS = [
-    ToolRecord(
-        id="registry-1",
-        name="ImageClassifier",
-        description="Classifica immagini in categorie predefinite",
-        version="0.1.0",
-        scope_tags=["vision", "classification"],
-        capabilities=["classify_image", "return_top_label"],
-        input_schema={"type": "image"},
-        output_schema={"type": "label"},
-        endpoint="http://localhost:8000/mock/image-classifier",
-        status="active",
-        owner="lab"
-    ),
-    ToolRecord(
-        id="registry-2",
-        name="OCRTool",
-        description="Estrae testo da documenti e immagini",
-        version="0.1.0",
-        scope_tags=["vision", "document", "ocr"],
-        capabilities=["extract_text", "parse_document"],
-        input_schema={"type": "image_or_pdf"},
-        output_schema={"type": "text"},
-        endpoint="http://localhost:8000/mock/ocr",
-        status="active",
-        owner="lab"
-    ),
-    ToolRecord(
-        id="registry-3",
-        name="RoutePlanner",
-        description="Calcola percorsi e tragitti",
-        version="0.1.0",
-        scope_tags=["planning", "maps", "routing"],
-        capabilities=["plan_route", "estimate_distance"],
-        input_schema={"type": "locations"},
-        output_schema={"type": "route"},
-        endpoint="http://localhost:8000/mock/route",
-        status="active",
-        owner="lab"
-    ),
-]
+DB_FILE = os.path.join(os.path.dirname(__file__), "tools_db.json")
+
+def get_all_tools() -> List[ToolRecord]:
+    """Legge il file JSON e restituisce la lista di ToolRecord."""
+    if not os.path.exists(DB_FILE):
+        return []
+    
+    try:
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            # Converte i dizionari letti dal file in oggetti ToolRecord
+            return [ToolRecord(**item) for item in data]
+    except (json.JSONDecodeError, ValueError) as e:
+        # Stampiamo l'errore nel terminale per comodità di debug
+        print(f"Attenzione: Impossibile leggere il database. File corrotto o vuoto. Dettaglio: {e}")
+        return []
+
+def save_all_tools(tools: List[ToolRecord]):
+    """Salva la lista di ToolRecord nel file JSON sovrascrivendolo."""
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        # tool.model_dump() converte l'oggetto Pydantic in un dizionario
+        json_data = [tool.model_dump() for tool in tools]
+        json.dump(json_data, f, indent=4)
