@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from app.models.tool import ToolRecord
-from app.services.memory_store import TOOLS
+from app.services.memory_store import get_all_tools, save_all_tools
 
+TOOLS = get_all_tools()
 router = APIRouter()
 
 # Registry = catalogo dei tool.
