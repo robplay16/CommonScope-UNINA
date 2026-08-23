@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.models.request import ScopeRequest
 from app.services.memory_store import get_all_tools, save_all_tools #modificato da TOOLS a get_all_tools() per non importare la variabile globale (lista di ToolRecord) direttamente, ma per ottenere la lista di tool dal file dove sono contenuti.
 
-TOOLS = get_all_tools() #di conseguenza, TOOLS è ora una lista di ToolRecord ottenuta dal file tools_db.txt, invece di essere importata direttamente come variabile globale.
+TOOLS = get_all_tools() #di conseguenza, TOOLS è ora una lista di ToolRecord ottenuta dal file tools_db.json, invece di essere importata direttamente come variabile globale.
 router = APIRouter()
 
 # Router iniziale:
