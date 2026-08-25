@@ -61,7 +61,6 @@ async function deleteTool(toolId) {
 }
 
 // --- 2. CREAZIONE ---
-// --- 2. CREAZIONE ---
 async function createTool() {
   const idInput = document.getElementById("newToolId");
   const nameInput = document.getElementById("newToolName");
@@ -153,7 +152,7 @@ async function createTool() {
     document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
     document.querySelectorAll("select").forEach(el => el.selectedIndex = 0); // Resetta Input/Output
     
-    document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope * (Settore) ▼";
+    document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope (Settore) * ▼";
     capsMenu.innerHTML = "";
     capsBtn.innerText = "Seleziona prima uno Scope...";
     capsBtn.style.background = "#f8fafc";
@@ -257,7 +256,9 @@ document.getElementById("loadToolsBtn").addEventListener("click", async () => {
     // Se è nascosta, chiamiamo la funzione che la popola e cambia il testo
     await loadTools();
   }
-});document.getElementById("createToolBtn").addEventListener("click", createTool);
+});
+
+document.getElementById("createToolBtn").addEventListener("click", createTool);
 document.getElementById("routeBtn").addEventListener("click", runRouter);
 
 // --- GESTIONE MENU A TENDINA SCOPE ---
@@ -285,7 +286,7 @@ scopeCheckboxes.forEach(cb => {
     if (checkedCount === 0) {
       scopeBtn.innerText = "Seleziona Scope ▼";
     } else {
-      scopeBtn.innerText = `${checkedCount} scope selezionati ▼`;
+      scopeBtn.innerText = `${checkedCount} scope selezionato/i ▼`;
     }
   });
 });
@@ -304,6 +305,31 @@ const scopeToCaps = {
   analysis: ["generate_report", "analyze_trends"],
   audio: ["transcribe_audio", "audio_classification"],
   data: ["clean_data", "aggregate_data"]
+};
+
+// Dizionario per le descrizioni delle capabilities
+const capsDescriptions = {
+  "classify_image": "Assegna una categoria o etichetta a un'immagine.",
+  "extract_text": "Estrae testo da documenti o immagini.",
+  "detect_objects": "Individua e delimita oggetti specifici.",
+  "return_top_label": "Restituisce la classe con la probabilità più alta.",
+  "categorize_data": "Suddivide un dataset in categorie logiche.",
+  "parse_document": "Analizza layout e struttura del documento.",
+  "summarize": "Genera un riassunto del documento o testo.",
+  "recognize_characters": "Converte i pixel in caratteri digitali.",
+  "plan_route": "Calcola un percorso o una sequenza logica di passi.",
+  "optimize_schedule": "Ottimizza le tempistiche di una serie di azioni.",
+  "estimate_distance": "Calcola la distanza fisica o logica.",
+  "find_location": "Individua le coordinate geografiche di un luogo.",
+  "translate": "Traduce il testo da una lingua all'altra.",
+  "sentiment_analysis": "Valuta il tono emotivo del testo.",
+  "extract_keywords": "Individua le parole chiave principali.",
+  "generate_report": "Crea un documento riassuntivo dei dati.",
+  "analyze_trends": "Individua pattern e tendenze nel tempo.",
+  "transcribe_audio": "Converte l'audio parlato in testo testuale.",
+  "audio_classification": "Categorizza il tipo di suono (es. voce, rumore).",
+  "clean_data": "Rimuove rumore o formattazioni errate dai dati.",
+  "aggregate_data": "Raggruppa e sintetizza dataset complessi."
 };
 
 const capsBtn = document.getElementById("capsDropdownBtn");
@@ -326,7 +352,7 @@ document.addEventListener("click", (e) => {
 function updateCapabilitiesMenu() {
   const selectedScopes = Array.from(document.querySelectorAll('#scopeDropdownMenu input:checked')).map(cb => cb.value);
   
-  // Usiamo un Set per evitare capabilities duplicate (es. ocr e document hanno entrambi extract_text)
+  // Usiamo un Set per evitare capabilities duplicate
   let availableCaps = new Set();
   selectedScopes.forEach(scope => {
     if (scopeToCaps[scope]) scopeToCaps[scope].forEach(cap => availableCaps.add(cap));
@@ -337,19 +363,24 @@ function updateCapabilitiesMenu() {
  if (availableCaps.size === 0) {
     capsBtn.innerText = "Seleziona prima uno Scope...";
     capsBtn.style.background = "#f8fafc";
-    capsBtn.style.color = "var(--muted)"; // <-- AGGIUNGI QUESTA: Torna grigio se lo disabiliti
+    capsBtn.style.color = "var(--muted)";
     capsBtn.style.cursor = "not-allowed";
     capsMenu.style.display = "none";
   } else {
     capsBtn.innerText = "Seleziona Capabilities * ▼";
     capsBtn.style.background = "white";
-    capsBtn.style.color = "var(--text)"; // <-- AGGIUNGI QUESTA: Diventa nero quando si attiva!
+    capsBtn.style.color = "var(--text)";
     capsBtn.style.cursor = "pointer";
     
+    // Generazione dinamica con HTML formattato per la descrizione
     availableCaps.forEach(cap => {
+      const desc = capsDescriptions[cap] || "Capacità operativa."; // Recupera la spiegazione
       const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;";
-      label.innerHTML = `<input type="checkbox" value="${cap}" style="width: auto; margin: 0; padding: 0;"> ${cap}`;
+      label.style.cssText = "display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;";
+      label.innerHTML = `
+        <input type="checkbox" value="${cap}" style="width: auto; margin-top: 4px; padding: 0;"> 
+        <span style="font-size: 0.9em;"><strong>${cap}</strong><br><span style="color: var(--muted); font-size: 0.85em;">${desc}</span></span>
+      `;
       capsMenu.appendChild(label);
     });
 
@@ -357,7 +388,7 @@ function updateCapabilitiesMenu() {
     capsMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', () => {
         const checkedCount = capsMenu.querySelectorAll('input:checked').length;
-        capsBtn.innerText = checkedCount === 0 ? "Seleziona Capabilities ▼" : `${checkedCount} capabilities selezionate ▼`;
+        capsBtn.innerText = checkedCount === 0 ? "Seleziona Capabilities ▼" : `${checkedCount} capabilities selezionata/e ▼`;
       });
     });
   }

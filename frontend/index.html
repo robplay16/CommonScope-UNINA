@@ -39,19 +39,55 @@
           <button type="button" id="scopeDropdownBtn" style="width: 100%; text-align: left; background: white; color: var(--text); border: 1px solid var(--border); margin-top: 6px; padding: 10px; border-radius: 8px; cursor: pointer;">
             Seleziona Scope (Settore) * ▼
           </button>
-          <div id="scopeDropdownMenu" style="display: none; position: absolute; background: white; border: 1px solid var(--border); width: 100%; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; padding: 8px; box-sizing: border-box;">
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="vision" style="width: auto; margin: 0; padding: 0;"> vision</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="classification" style="width: auto; margin: 0; padding: 0;"> classification</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="document" style="width: auto; margin: 0; padding: 0;"> document</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="ocr" style="width: auto; margin: 0; padding: 0;"> ocr</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="planning" style="width: auto; margin: 0; padding: 0;"> planning</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="maps" style="width: auto; margin: 0; padding: 0;"> maps</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="routing" style="width: auto; margin: 0; padding: 0;"> routing</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="nlp" style="width: auto; margin: 0; padding: 0;"> nlp</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="text" style="width: auto; margin: 0; padding: 0;"> text</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="analysis" style="width: auto; margin: 0; padding: 0;"> analysis</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="audio" style="width: auto; margin: 0; padding: 0;"> audio</label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="data" style="width: auto; margin: 0; padding: 0;"> data</label>
+          <div id="scopeDropdownMenu" style="display: none; position: absolute; background: white; border: 1px solid var(--border); width: 100%; max-height: 250px; overflow-y: auto; z-index: 10; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; padding: 8px; box-sizing: border-box;">
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="vision" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>vision</strong><br><span style="color: var(--muted); font-size: 0.85em;">Analisi, elaborazione e comprensione di dati visivi e immagini.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="classification" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>classification</strong><br><span style="color: var(--muted); font-size: 0.85em;">Categorizzazione generale di dati in classi predefinite.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="document" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>document</strong><br><span style="color: var(--muted); font-size: 0.85em;">Elaborazione e comprensione della struttura di documenti.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="ocr" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>ocr</strong><br><span style="color: var(--muted); font-size: 0.85em;">Riconoscimento ottico dei caratteri (Optical Character Recognition).</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="planning" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>planning</strong><br><span style="color: var(--muted); font-size: 0.85em;">Pianificazione logica e schedulazione di azioni o task.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="maps" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>maps</strong><br><span style="color: var(--muted); font-size: 0.85em;">Gestione di dati spaziali, mappe e coordinate.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="routing" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>routing</strong><br><span style="color: var(--muted); font-size: 0.85em;">Calcolo e ottimizzazione di percorsi (fisici o logici).</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="nlp" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>nlp</strong><br><span style="color: var(--muted); font-size: 0.85em;">Elaborazione e comprensione del linguaggio naturale (Natural Language Processing).</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="text" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>text</strong><br><span style="color: var(--muted); font-size: 0.85em;">Manipolazione e analisi standard di stringhe testuali.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="analysis" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>analysis</strong><br><span style="color: var(--muted); font-size: 0.85em;">Analisi avanzata di dati per dedurre informazioni.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;">
+              <input type="checkbox" value="audio" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>audio</strong><br><span style="color: var(--muted); font-size: 0.85em;">Elaborazione e riconoscimento di segnali sonori o vocali.</span></span>
+            </label>
+            <label style="display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0;">
+              <input type="checkbox" value="data" style="width: auto; margin-top: 4px; padding: 0;"> 
+              <span style="font-size: 0.9em;"><strong>data</strong><br><span style="color: var(--muted); font-size: 0.85em;">Manipolazione, pulizia e strutturazione di dataset.</span></span>
+            </label>
           </div>
         </div>        
 
@@ -93,8 +129,6 @@
       </div>
 
       <!-- Elementi a larghezza intera (fuori dalla griglia) -->
-<!-- Elementi a larghezza intera (fuori dalla griglia) -->
-<!-- Elementi a larghezza intera (fuori dalla griglia) -->
       <textarea id="newToolDesc" rows="3" placeholder="Descrizione del tool" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; box-sizing: border-box; resize: none;"></textarea>      <!-- NUOVA SCRITTA PER I CAMPI OBBLIGATORI -->
       <p style="font-size: 0.8em; color: var(--muted); margin-top: 4px; margin-bottom: 12px; text-align: left;">
         * I campi contrassegnati dall'asterisco sono obbligatori.
