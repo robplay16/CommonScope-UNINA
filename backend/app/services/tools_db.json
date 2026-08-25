@@ -82,5 +82,22 @@
         "endpoint": "http://localhost:8000/mock/route",
         "status": "active",
         "owner": "lab"
+    },
+    {
+        "id": "a",
+        "name": "a",
+        "description": "",
+        "version": "0.1.0",
+        "scope_tags": [],
+        "capabilities": [],
+        "input_schema": {
+            "type": "any"
+        },
+        "output_schema": {
+            "type": "any"
+        },
+        "endpoint": "a",
+        "status": "active",
+        "owner": "lab"
     }
 ]

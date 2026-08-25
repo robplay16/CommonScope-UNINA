@@ -20,16 +20,88 @@
     <section class="card">
       <h2>Tool Registry</h2>
       <p>Mostra i tool attualmente caricati nel backend.</p>
-      <button id="loadToolsBtn">Carica tool</button>
+      <button id="loadToolsBtn">Mostra Tools Registarti</button>
       <ul id="toolsList"></ul>
 
-      <!-- Modulo per aggiungere un nuovo tool -->
+    <!-- Modulo per aggiungere un nuovo tool -->
       <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);" />
       <h3>Aggiungi Nuovo Tool</h3>
-      <input id="newToolId" type="text" placeholder="ID (es. my-tool-1)" />
-      <input id="newToolName" type="text" placeholder="Nome (es. Analizzatore)" />
-      <textarea id="newToolDesc" rows="2" placeholder="Descrizione del tool"></textarea>
-      <button id="createToolBtn" style="background: #10b981;">+ Crea Tool</button>
+
+      <!-- Inizio Griglia a 2 colonne -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        
+        <!-- Riga 1 -->
+        <input id="newToolId" type="text" placeholder="ID *" />
+        <input id="newToolName" type="text" placeholder="Nome *" />
+        
+        <!-- Riga 2: Scope e Capabilities (Affiancati) -->
+        <div style="position: relative; width: 100%;">
+          <button type="button" id="scopeDropdownBtn" style="width: 100%; text-align: left; background: white; color: var(--text); border: 1px solid var(--border); margin-top: 6px; padding: 10px; border-radius: 8px; cursor: pointer;">
+            Seleziona Scope (Settore) * ▼
+          </button>
+          <div id="scopeDropdownMenu" style="display: none; position: absolute; background: white; border: 1px solid var(--border); width: 100%; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; padding: 8px; box-sizing: border-box;">
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="vision" style="width: auto; margin: 0; padding: 0;"> vision</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="classification" style="width: auto; margin: 0; padding: 0;"> classification</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="document" style="width: auto; margin: 0; padding: 0;"> document</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="ocr" style="width: auto; margin: 0; padding: 0;"> ocr</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="planning" style="width: auto; margin: 0; padding: 0;"> planning</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="maps" style="width: auto; margin: 0; padding: 0;"> maps</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="routing" style="width: auto; margin: 0; padding: 0;"> routing</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="nlp" style="width: auto; margin: 0; padding: 0;"> nlp</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="text" style="width: auto; margin: 0; padding: 0;"> text</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="analysis" style="width: auto; margin: 0; padding: 0;"> analysis</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="audio" style="width: auto; margin: 0; padding: 0;"> audio</label>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer; margin: 0;"><input type="checkbox" value="data" style="width: auto; margin: 0; padding: 0;"> data</label>
+          </div>
+        </div>        
+
+        <div style="position: relative; width: 100%;">
+          <button type="button" id="capsDropdownBtn" style="width: 100%; text-align: left; background: #f8fafc; color: var(--muted); border: 1px solid var(--border); margin-top: 6px; padding: 10px; border-radius: 8px; cursor: not-allowed;">
+            Seleziona prima uno Scope...
+          </button>
+          <div id="capsDropdownMenu" style="display: none; position: absolute; background: white; border: 1px solid var(--border); width: 100%; max-height: 180px; overflow-y: auto; z-index: 10; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 4px; padding: 8px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- Riga 3: Menu a tendina per Input e Output -->
+        <select id="newToolInput" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; background: white; color: var(--text); cursor: pointer;">
+          <option value="" disabled selected>Tipo Input ▼</option>
+          <option value="any">any (Qualsiasi)</option>
+          <option value="text">text (Testo)</option>
+          <option value="image">image (Immagine)</option>
+          <option value="image_or_pdf">image_or_pdf (Immagine o PDF)</option>
+          <option value="audio">audio (Audio)</option>
+          <option value="video">video (Video)</option>
+          <option value="json">json (Dati Strutturati)</option>
+          <option value="locations">locations (Coordinate/Mappe)</option>
+        </select>
+        
+        <select id="newToolOutput" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 6px; background: white; color: var(--text); cursor: pointer;">
+          <option value="" disabled selected>Tipo Output ▼</option>
+          <option value="any">any (Qualsiasi)</option>
+          <option value="text">text (Testo)</option>
+          <option value="label">label (Etichetta/Categoria)</option>
+          <option value="json">json (Dati Strutturati)</option>
+          <option value="audio">audio (Audio)</option>
+          <option value="image">image (Immagine)</option>
+          <option value="route">route (Percorso)</option>
+        </select>
+        
+        <!-- Riga 4 -->
+        <input id="newToolOwner" type="text" placeholder="Proprietario" />
+        <input id="newToolEndpoint" type="url" placeholder="Endpoint URL (es. http://...) *" />        
+      </div>
+
+      <!-- Elementi a larghezza intera (fuori dalla griglia) -->
+<!-- Elementi a larghezza intera (fuori dalla griglia) -->
+<!-- Elementi a larghezza intera (fuori dalla griglia) -->
+      <textarea id="newToolDesc" rows="3" placeholder="Descrizione del tool" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; box-sizing: border-box; resize: none;"></textarea>      <!-- NUOVA SCRITTA PER I CAMPI OBBLIGATORI -->
+      <p style="font-size: 0.8em; color: var(--muted); margin-top: 4px; margin-bottom: 12px; text-align: left;">
+        * I campi contrassegnati dall'asterisco sono obbligatori.
+      </p>
+
+      <button id="createToolBtn" style="background: #10b981; width: 100%;">+ Aggiungi Tool</button>
+      
     </section>
 
     <section class="card">
