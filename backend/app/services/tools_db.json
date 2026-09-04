@@ -1,18 +1,5 @@
 [
     {
-        "id": "tool-test-1",
-        "name": "Test1-modificato",
-        "description": "prima richiesta di aggiunta di tool- modificato",
-        "version": "0.1.0",
-        "scope_tags": [],
-        "capabilities": [],
-        "input_schema": {},
-        "output_schema": {},
-        "endpoint": null,
-        "status": "active",
-        "owner": null
-    },
-    {
         "id": "registry-1",
         "name": "ImageClassifier",
         "description": "Classifica immagini in categorie predefinite",
@@ -84,20 +71,24 @@
         "owner": "lab"
     },
     {
-        "id": "a",
-        "name": "a",
-        "description": "",
+        "id": "test-1",
+        "name": "TEST1",
+        "description": "ness",
         "version": "0.1.0",
-        "scope_tags": [],
-        "capabilities": [],
+        "scope_tags": [
+            "vision"
+        ],
+        "capabilities": [
+            "extract_text"
+        ],
         "input_schema": {
-            "type": "any"
+            "type": "text"
         },
         "output_schema": {
-            "type": "any"
+            "type": "json"
         },
-        "endpoint": "a",
+        "endpoint": "http://test",
         "status": "active",
-        "owner": "lab"
+        "owner": "io"
     }
 ]
