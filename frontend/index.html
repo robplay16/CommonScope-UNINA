@@ -138,6 +138,31 @@
       
     </section>
 
+    <!-- SEZIONE TEST TOOL NLP -->
+    <section class="card" style="border-top: 4px solid #8b5cf6;">
+      <h2 style="margin-top: 0; color: #333;">🧪 Area di Test: Analisi Sentiment</h2>
+      <p style="color: var(--muted); font-size: 0.9em;">
+        Questa sezione invia una richiesta reale al Tool Server indipendente (porta 8001) per testarne l'efficacia.
+      </p>
+      
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">Testo da analizzare:</label>
+        <textarea id="testTextInput" rows="3" placeholder="Scrivi una frase (es: Questo progetto è davvero fantastico!)..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; box-sizing: border-box;"></textarea>
+      </div>
+      
+      <button onclick="testSentimentTool()" style="background: #8b5cf6; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
+        Analizza con Tool Esterno
+      </button>
+
+      <!-- Area Risultato -->
+      <div id="testResult" style="margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 4px; border: 1px solid var(--border); display: none;">
+        <h4 style="margin: 0 0 10px 0;">Risultato dell'Analisi:</h4>
+        <p style="margin: 5px 0;"><strong>Testo:</strong> <span id="resText"></span></p>
+        <p style="margin: 5px 0;"><strong>Sentiment:</strong> <span id="resLabel" style="font-weight: bold; padding: 2px 6px; border-radius: 4px;"></span></p>
+        <p style="margin: 5px 0;"><strong>Polarity Score:</strong> <span id="resScore"></span></p>
+      </div>
+    </section>
+
     <section class="card">
       <h2>Scope Router</h2>
       <p>Invia una richiesta al Router e mostra i tool più pertinenti.</p>

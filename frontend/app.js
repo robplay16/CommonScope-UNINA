@@ -107,12 +107,22 @@ async function createTool() {
   if (!endpointStr) {
     showError(endpointInput);
   } else {
+    // AUTO-CORREZIONE: Se l'utente dimentica http:// o https://, lo aggiungiamo in automatico
+    let sanitizedEndpoint = endpointStr.toLowerCase();
+    if (!sanitizedEndpoint.startsWith("http://") && !sanitizedEndpoint.startsWith("https://")) {
+      sanitizedEndpoint = "http://" + endpointStr; 
+    }
+
     try {
-      new URL(endpointStr);
-      validEndpoint = endpointStr;
+      // Valida l'endpoint (ora provvisto di protocollo)
+      new URL(sanitizedEndpoint);
+      validEndpoint = sanitizedEndpoint; 
+      
+      // Aggiorna anche visivamente l'input per mostrare all'utente l'URL corretto
+      endpointInput.value = validEndpoint; 
     } catch (err) {
       showError(endpointInput);
-      return alert("Attenzione: L'Endpoint URL inserito non è valido. Assicurati di includere http:// o https://");
+      return alert("Attenzione: L'Endpoint URL inserito non è nel formato corretto.");
     }
   }
 
@@ -413,3 +423,59 @@ document.getElementById("scopeDropdownBtn").addEventListener("click", function()
 document.getElementById("capsDropdownBtn").addEventListener("click", function() {
   if (this.style.borderColor === "rgb(239, 68, 68)" || this.style.borderColor === "#ef4444") clearError(this);
 });
+
+// --- FUNZIONE DI TEST PER IL TOOL NLP ESTERNO (Porta 8001) ---
+async function testSentimentTool() {
+  const textInput = document.getElementById("testTextInput").value.trim();
+  const resultDiv = document.getElementById("testResult");
+  
+  if (!textInput) {
+    return alert("Inserisci una frase da analizzare!");
+  }
+
+  // Mostriamo un caricamento base
+  resultDiv.style.display = "block";
+  document.getElementById("resText").innerText = "Elaborazione in corso...";
+  document.getElementById("resLabel").innerText = "...";
+  document.getElementById("resLabel").style.background = "transparent";
+  document.getElementById("resLabel").style.color = "black";
+  document.getElementById("resScore").innerText = "...";
+
+  try {
+    // Chiamata fisica al Tool Server (non al Registry!)
+    const res = await fetch("http://127.0.0.1:8001/analyze-sentiment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: textInput })
+    });
+
+    if (!res.ok) {
+      throw new Error("Errore dal server del tool");
+    }
+
+    const data = await res.json();
+
+    // Aggiorniamo l'interfaccia con i risultati
+    document.getElementById("resText").innerText = data.text_analyzed;
+    document.getElementById("resScore").innerText = data.polarity_score;
+    
+    // Coloriamo l'etichetta in base al risultato
+    const labelSpan = document.getElementById("resLabel");
+    labelSpan.innerText = data.sentiment_label;
+    
+    if (data.sentiment_label === "POSITIVE") {
+      labelSpan.style.background = "#dcfce7";
+      labelSpan.style.color = "#166534";
+    } else if (data.sentiment_label === "NEGATIVE") {
+      labelSpan.style.background = "#fee2e2";
+      labelSpan.style.color = "#991b1b";
+    } else {
+      labelSpan.style.background = "#f1f5f9";
+      labelSpan.style.color = "#475569";
+    }
+
+  } catch (err) {
+    alert("Impossibile connettersi al Tool. Assicurati che sia in esecuzione sulla porta 8001.");
+    resultDiv.style.display = "none";
+  }
+}
