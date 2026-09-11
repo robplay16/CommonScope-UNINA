@@ -37,7 +37,7 @@ async def analyze_sentiment(payload: SentimentRequest):
     
     # Esecuzione del modello NLP
     blob = TextBlob(payload.text)
-    score = blob.sentiment.polarity  # Valore da -1.0 (negativo) a 1.0 (positivo)
+    score = blob.sentiment.polarity  # type: ignore # Valore da -1.0 (negativo) a 1.0 (positivo)
     
     # Classificazione basata sullo score
     if score > 0.1:

@@ -92,27 +92,6 @@
         "owner": "io"
     },
     {
-        "id": "ciao1",
-        "name": "ciao-1",
-        "description": "",
-        "version": "0.1.0",
-        "scope_tags": [
-            "document"
-        ],
-        "capabilities": [
-            "summarize"
-        ],
-        "input_schema": {
-            "type": "any"
-        },
-        "output_schema": {
-            "type": "any"
-        },
-        "endpoint": "http://ciao",
-        "status": "active",
-        "owner": "lab"
-    },
-    {
         "id": "nlp-sentiment-local-1",
         "name": "Analizzatore di Sentimenti Base",
         "description": "modello NLP leggero per estrarre la polarit\u00e0 da testi brevi.",

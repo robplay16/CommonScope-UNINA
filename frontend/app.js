@@ -2,12 +2,12 @@
 const API_BASE = "http://localhost:8000/api";
 
 // --- 1. LETTURA E CANCELLAZIONE ---
-let isToolsListVisible = false; // NUOVA: Memorizza se la lista è aperta o chiusa
-let currentTools = []; // Salviamo i tool qui in memoria per non perdere dati durante l'update
+let isToolsListVisible = false; 
+let currentTools = []; 
 
 async function loadTools() {
   const toolsList = document.getElementById("toolsList");
-  const btn = document.getElementById("loadToolsBtn"); // Recuperiamo il bottone
+  const btn = document.getElementById("loadToolsBtn"); 
   toolsList.innerHTML = "<li>Caricamento...</li>";
   
   try {
@@ -39,7 +39,6 @@ async function loadTools() {
       toolsList.appendChild(li);
     });
 
-    // Quando la lista viene caricata, cambiamo lo stato e il testo del bottone
     isToolsListVisible = true;
     btn.innerText = "Non mostrare più";
 
@@ -49,16 +48,28 @@ async function loadTools() {
 }
 
 async function deleteTool(toolId) {
-  // Finestra di conferma prima di eliminare
   if (!confirm(`Vuoi davvero eliminare il tool ${toolId}?`)) return;
   
   try {
     await fetch(`${API_BASE}/registry/tools/${toolId}`, { method: "DELETE" });
-    loadTools(); // Ricarica la lista aggiornata dopo l'eliminazione
+    loadTools(); 
   } catch (err) {
     alert("Errore durante l'eliminazione");
   }
 }
+
+// --- GENERAZIONE AUTOMATICA DELL'ID DAL NOME ---
+document.getElementById("newToolName").addEventListener("input", function(e) {
+  const nameVal = e.target.value;
+  // Converte in minuscolo, sostituisce spazi e underscore con trattini, rimuove caratteri speciali
+  const generatedId = nameVal
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, '-') 
+    .replace(/[^a-z0-9-]/g, ''); 
+    
+  document.getElementById("newToolId").value = generatedId;
+});
 
 // --- 2. CREAZIONE ---
 async function createTool() {
@@ -72,14 +83,13 @@ async function createTool() {
   const name = nameInput.value.trim();
   const endpointStr = endpointInput.value.trim();
 
-  // Legge quali checkbox sono state selezionate nel menu a tendina
   const selectedScopes = Array.from(document.querySelectorAll('#scopeDropdownMenu input:checked')).map(cb => cb.value);
   const selectedCaps = Array.from(document.querySelectorAll('#capsDropdownMenu input:checked')).map(cb => cb.value);
 
-  // --- 1. RESET VISIVO INIZIALE (Riporta tutto alla normalità) ---
+  // --- 1. RESET VISIVO INIZIALE ---
   const resetStyle = (element) => {
     element.style.borderColor = "var(--border)";
-    element.style.backgroundColor = "white";
+    element.style.backgroundColor = element.readOnly ? "#f1f5f9" : "white";
   };
   
   resetStyle(idInput);
@@ -92,14 +102,13 @@ async function createTool() {
   let hasError = false;
 
   const showError = (element) => {
-    element.style.borderColor = "#ef4444"; // Diventa rosso
+    element.style.borderColor = "#ef4444"; 
     element.style.backgroundColor = "#fef2f2";
     hasError = true;
   };
 
-  // Ora colorerà di rosso SOLO quelli effettivamente vuoti in questo momento
-  if (!id) showError(idInput);
   if (!name) showError(nameInput);
+  if (!id) showError(idInput); // Questo scatterà solo se il nome è vuoto o fatto di soli simboli
   if (selectedScopes.length === 0) showError(scopeBtn);
   if (selectedCaps.length === 0) showError(capsBtn);
   
@@ -107,18 +116,14 @@ async function createTool() {
   if (!endpointStr) {
     showError(endpointInput);
   } else {
-    // AUTO-CORREZIONE: Se l'utente dimentica http:// o https://, lo aggiungiamo in automatico
     let sanitizedEndpoint = endpointStr.toLowerCase();
     if (!sanitizedEndpoint.startsWith("http://") && !sanitizedEndpoint.startsWith("https://")) {
       sanitizedEndpoint = "http://" + endpointStr; 
     }
 
     try {
-      // Valida l'endpoint (ora provvisto di protocollo)
       new URL(sanitizedEndpoint);
       validEndpoint = sanitizedEndpoint; 
-      
-      // Aggiorna anche visivamente l'input per mostrare all'utente l'URL corretto
       endpointInput.value = validEndpoint; 
     } catch (err) {
       showError(endpointInput);
@@ -130,7 +135,22 @@ async function createTool() {
     return alert("Compila tutti i campi obbligatori contrassegnati con l'asterisco (*)");
   }
 
-  // Creiamo l'oggetto completo
+  // --- 3. CONTROLLO DUPLICATI (ID UNIVOCO) ---
+  try {
+    const checkRes = await fetch(`${API_BASE}/registry/tools`);
+    if (checkRes.ok) {
+      const existingTools = await checkRes.json();
+      if (existingTools.some(t => t.id === id)) {
+        showError(idInput);
+        showError(nameInput);
+        return alert(`Attenzione: L'ID generato '${id}' esiste già nel Registry. Modifica leggermente il Nome del tool per renderlo univoco.`);
+      }
+    }
+  } catch (err) {
+    console.warn("Impossibile verificare i duplicati lato client, il server se ne occuperà.");
+  }
+
+  // --- 4. CREAZIONE OGGETTO E INVIO ---
   const newTool = {
     id: id,
     name: name,
@@ -140,7 +160,7 @@ async function createTool() {
     capabilities: selectedCaps,    
     input_schema: { type: document.getElementById("newToolInput").value || "any" },
     output_schema: { type: document.getElementById("newToolOutput").value || "any" },
-    endpoint: validEndpoint, // Usiamo l'URL validato
+    endpoint: validEndpoint,
     status: "active",
     owner: document.getElementById("newToolOwner").value.trim() || "lab"
   };
@@ -157,10 +177,11 @@ async function createTool() {
       return alert("Errore dal server: " + err.detail);
     }
 
-    // Pulizia di tutti i campi dopo il successo
-    document.querySelectorAll("input[type='text'], input[type='url'], textarea").forEach(el => el.value = "");
+    // Pulizia dei campi
+    document.querySelectorAll("input[type='text']:not([readonly]), input[type='url'], textarea").forEach(el => el.value = "");
+    document.getElementById("newToolId").value = ""; // Svuotiamo anche l'ID readonly
     document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-    document.querySelectorAll("select").forEach(el => el.selectedIndex = 0); // Resetta Input/Output
+    document.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
     
     document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope (Settore) * ▼";
     capsMenu.innerHTML = "";
@@ -169,7 +190,7 @@ async function createTool() {
     capsBtn.style.color = "var(--muted)";
     capsBtn.style.cursor = "not-allowed";
     
-    loadTools(); // Ricarica la lista
+    loadTools(); 
   } catch (err) {
     alert("Errore di connessione con il server");
   }
@@ -177,7 +198,6 @@ async function createTool() {
 
 // --- 3. AGGIORNAMENTO SICURO ---
 async function updateTool(toolId) {
-  // Trova il tool originale per non cancellare gli array e gli schemi non modificabili
   const originalTool = currentTools.find(t => t.id === toolId);
   if (!originalTool) return;
 
@@ -187,7 +207,6 @@ async function updateTool(toolId) {
   const newDesc = prompt(`Modifica la descrizione per ${toolId}:`, originalTool.description);
   if (newDesc === null) return;
 
-  // Crea una copia del tool aggiornando solo nome e descrizione
   const updatedTool = { 
     ...originalTool, 
     name: newName.trim(), 
@@ -252,18 +271,15 @@ async function runRouter() {
 }
 
 // --- ASSEGNAZIONE EVENTI AI PULSANTI ---
-// Gestione interruttore (toggle) per mostrare/nascondere la lista
 document.getElementById("loadToolsBtn").addEventListener("click", async () => {
   const btn = document.getElementById("loadToolsBtn");
   const toolsList = document.getElementById("toolsList");
 
   if (isToolsListVisible) {
-    // Se la lista è visibile, la svuotiamo e resettiamo il bottone
     toolsList.innerHTML = "";
     btn.innerText = "Mostra Tools Registrati";
     isToolsListVisible = false;
   } else {
-    // Se è nascosta, chiamiamo la funzione che la popola e cambia il testo
     await loadTools();
   }
 });
@@ -276,25 +292,22 @@ const scopeBtn = document.getElementById("scopeDropdownBtn");
 const scopeMenu = document.getElementById("scopeDropdownMenu");
 const scopeCheckboxes = document.querySelectorAll('#scopeDropdownMenu input[type="checkbox"]');
 
-// Apri/Chiudi il menu al click sul bottone
 scopeBtn.addEventListener("click", (e) => {
   e.preventDefault(); 
   scopeMenu.style.display = scopeMenu.style.display === "none" ? "block" : "none";
 });
 
-// Chiudi il menu se clicchi fuori
 document.addEventListener("click", (e) => {
   if (!scopeBtn.contains(e.target) && !scopeMenu.contains(e.target)) {
     scopeMenu.style.display = "none";
   }
 });
 
-// Cambia il testo del bottone quando selezioni una casella
 scopeCheckboxes.forEach(cb => {
   cb.addEventListener('change', () => {
     const checkedCount = document.querySelectorAll('#scopeDropdownMenu input:checked').length;
     if (checkedCount === 0) {
-      scopeBtn.innerText = "Seleziona Scope ▼";
+      scopeBtn.innerText = "Seleziona Scope (Settore) * ▼";
     } else {
       scopeBtn.innerText = `${checkedCount} scope selezionato/i ▼`;
     }
@@ -317,7 +330,6 @@ const scopeToCaps = {
   data: ["clean_data", "aggregate_data"]
 };
 
-// Dizionario per le descrizioni delle capabilities
 const capsDescriptions = {
   "classify_image": "Assegna una categoria o etichetta a un'immagine.",
   "extract_text": "Estrae testo da documenti o immagini.",
@@ -347,12 +359,11 @@ const capsMenu = document.getElementById("capsDropdownMenu");
 
 capsBtn.addEventListener("click", (e) => {
   e.preventDefault();
-  if (capsMenu.innerHTML.trim() !== "") { // Si apre solo se ci sono opzioni
+  if (capsMenu.innerHTML.trim() !== "") {
     capsMenu.style.display = capsMenu.style.display === "none" ? "block" : "none";
   }
 });
 
-// Chiusura automatica cliccando fuori
 document.addEventListener("click", (e) => {
   if (!capsBtn.contains(e.target) && !capsMenu.contains(e.target)) {
     capsMenu.style.display = "none";
@@ -362,13 +373,12 @@ document.addEventListener("click", (e) => {
 function updateCapabilitiesMenu() {
   const selectedScopes = Array.from(document.querySelectorAll('#scopeDropdownMenu input:checked')).map(cb => cb.value);
   
-  // Usiamo un Set per evitare capabilities duplicate
   let availableCaps = new Set();
   selectedScopes.forEach(scope => {
     if (scopeToCaps[scope]) scopeToCaps[scope].forEach(cap => availableCaps.add(cap));
   });
 
-  capsMenu.innerHTML = ""; // Svuotiamo il menu
+  capsMenu.innerHTML = ""; 
 
  if (availableCaps.size === 0) {
     capsBtn.innerText = "Seleziona prima uno Scope...";
@@ -382,9 +392,8 @@ function updateCapabilitiesMenu() {
     capsBtn.style.color = "var(--text)";
     capsBtn.style.cursor = "pointer";
     
-    // Generazione dinamica con HTML formattato per la descrizione
     availableCaps.forEach(cap => {
-      const desc = capsDescriptions[cap] || "Capacità operativa."; // Recupera la spiegazione
+      const desc = capsDescriptions[cap] || "Capacità operativa."; 
       const label = document.createElement("label");
       label.style.cssText = "display: flex; align-items: flex-start; gap: 8px; padding: 6px 4px; cursor: pointer; margin: 0; border-bottom: 1px solid #f1f5f9;";
       label.innerHTML = `
@@ -394,7 +403,6 @@ function updateCapabilitiesMenu() {
       capsMenu.appendChild(label);
     });
 
-    // Aggiorniamo il testo del bottone quando si selezionano le capabilities
     capsMenu.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.addEventListener('change', () => {
         const checkedCount = capsMenu.querySelectorAll('input:checked').length;
@@ -404,17 +412,18 @@ function updateCapabilitiesMenu() {
   }
 }
 
-// Quando clicco uno scope, ricalcola le capabilities
 scopeCheckboxes.forEach(cb => cb.addEventListener('change', updateCapabilitiesMenu));
 
 // --- RIMOZIONE ERRORI VISIVI QUANDO SI SCRIVE ---
 const clearError = (element) => {
   element.style.borderColor = "var(--border)";
-  element.style.backgroundColor = "white";
+  element.style.backgroundColor = element.readOnly ? "#f1f5f9" : "white";
 };
 
-document.getElementById("newToolId").addEventListener("input", function() { clearError(this); });
-document.getElementById("newToolName").addEventListener("input", function() { clearError(this); });
+document.getElementById("newToolName").addEventListener("input", function() { 
+  clearError(this); 
+  clearError(document.getElementById("newToolId")); // Pulisce l'errore anche sull'ID collegato
+});
 document.getElementById("newToolEndpoint").addEventListener("input", function() { clearError(this); });
 
 document.getElementById("scopeDropdownBtn").addEventListener("click", function() {
@@ -433,7 +442,6 @@ async function testSentimentTool() {
     return alert("Inserisci una frase da analizzare!");
   }
 
-  // Mostriamo un caricamento base
   resultDiv.style.display = "block";
   document.getElementById("resText").innerText = "Elaborazione in corso...";
   document.getElementById("resLabel").innerText = "...";
@@ -442,7 +450,6 @@ async function testSentimentTool() {
   document.getElementById("resScore").innerText = "...";
 
   try {
-    // Chiamata fisica al Tool Server (non al Registry!)
     const res = await fetch("http://127.0.0.1:8001/analyze-sentiment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -455,11 +462,9 @@ async function testSentimentTool() {
 
     const data = await res.json();
 
-    // Aggiorniamo l'interfaccia con i risultati
     document.getElementById("resText").innerText = data.text_analyzed;
     document.getElementById("resScore").innerText = data.polarity_score;
     
-    // Coloriamo l'etichetta in base al risultato
     const labelSpan = document.getElementById("resLabel");
     labelSpan.innerText = data.sentiment_label;
     

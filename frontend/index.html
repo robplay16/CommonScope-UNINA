@@ -17,8 +17,8 @@
   </header>
 
   <main class="layout">
-    <section class="card">
-      <h2>Tool Registry</h2>
+    <section class="card" style="border-top: 4px solid #3b82f6;">
+      <h2>🔧Tool Registry</h2>
       <p>Mostra i tool attualmente caricati nel backend.</p>
       <button id="loadToolsBtn">Mostra Tools Registati</button>
       <ul id="toolsList"></ul>
@@ -30,9 +30,9 @@
       <!-- Inizio Griglia a 2 colonne -->
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         
-        <!-- Riga 1 -->
-        <input id="newToolId" type="text" placeholder="ID *" />
-        <input id="newToolName" type="text" placeholder="Nome *" />
+        <!-- Riga 1: Nome (Editabile) e ID (Sola lettura, generato in automatico) -->
+        <input id="newToolName" type="text" placeholder="Nome del Tool *" />
+        <input id="newToolId" type="text" placeholder="ID (generato in automatico)" readonly style="background-color: #f1f5f9; color: #64748b; border: 1px solid var(--border); cursor: not-allowed;" title="L'ID viene generato automaticamente dal nome" />
         
         <!-- Riga 2: Scope e Capabilities (Affiancati) -->
         <div style="position: relative; width: 100%;">
@@ -129,7 +129,9 @@
       </div>
 
       <!-- Elementi a larghezza intera (fuori dalla griglia) -->
-      <textarea id="newToolDesc" rows="3" placeholder="Descrizione del tool" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; box-sizing: border-box; resize: none;"></textarea>      <!-- NUOVA SCRITTA PER I CAMPI OBBLIGATORI -->
+      <textarea id="newToolDesc" rows="3" placeholder="Descrizione del tool" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-top: 10px; box-sizing: border-box; resize: none;"></textarea>      
+      
+      <!-- NUOVA SCRITTA PER I CAMPI OBBLIGATORI -->
       <p style="font-size: 0.8em; color: var(--muted); margin-top: 4px; margin-bottom: 12px; text-align: left;">
         * I campi contrassegnati dall'asterisco sono obbligatori.
       </p>
@@ -147,7 +149,7 @@
       
       <div style="margin-bottom: 15px;">
         <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em;">Testo da analizzare:</label>
-        <textarea id="testTextInput" rows="3" placeholder="Scrivi una frase (es: Questo progetto è davvero fantastico!)..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; box-sizing: border-box;"></textarea>
+        <textarea id="testTextInput" rows="3" placeholder="Scrivi una frase in inglese (es: This project is really amazing oppure This project is really terrible)..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-family: inherit; box-sizing: border-box;"></textarea>
       </div>
       
       <button onclick="testSentimentTool()" style="background: #8b5cf6; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%;">
