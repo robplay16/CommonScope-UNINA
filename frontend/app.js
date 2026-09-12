@@ -231,7 +231,7 @@ async function updateTool(toolId) {
   }
 }
 
-// --- 4. ROUTER (Placeholder) ---
+// --- 4. SCOPE  ROUTER ---
 async function runRouter() {
   const text = document.getElementById("queryText").value;
   const domain = document.getElementById("domainText").value.trim();
