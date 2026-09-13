@@ -12,6 +12,8 @@ async function loadTools() {
   
   try {
     const res = await fetch(`${API_BASE}/registry/tools`);
+    if (!res.ok) throw new Error("Errore API");
+    
     currentTools = await res.json(); 
     toolsList.innerHTML = "";
     
@@ -40,21 +42,32 @@ async function loadTools() {
     });
 
     isToolsListVisible = true;
-    btn.innerText = "Non mostrare più";
+    btn.innerText = "Non mostrare più 🔼";
 
   } catch (err) {
     toolsList.innerHTML = "<li>Errore nel caricamento dei tool</li>";
+    // TOAST DI ERRORE
+    showToast("Impossibile caricare i tool. Verifica che il Registry (porta 8000) sia attivo.", "error");
   }
 }
+
 
 async function deleteTool(toolId) {
   if (!confirm(`Vuoi davvero eliminare il tool ${toolId}?`)) return;
   
   try {
-    await fetch(`${API_BASE}/registry/tools/${toolId}`, { method: "DELETE" });
+    const res = await fetch(`${API_BASE}/registry/tools/${toolId}`, { method: "DELETE" });
+    
+    // Se il server risponde con un errore (es. 404 o 500), scatta il catch
+    if (!res.ok) throw new Error("Errore API");
+    
+    // TOAST DI SUCCESSO (Giallo/Arancione perché è un'eliminazione)
+    showToast(`Tool ${toolId} eliminato correttamente!`, "warning");
+    
     loadTools(); 
   } catch (err) {
-    alert("Errore durante l'eliminazione");
+    // TOAST DI ERRORE
+    showToast(`Errore durante l'eliminazione del tool ${toolId}.`, "error");
   }
 }
 
@@ -108,7 +121,7 @@ async function createTool() {
   };
 
   if (!name) showError(nameInput);
-  if (!id) showError(idInput); // Questo scatterà solo se il nome è vuoto o fatto di soli simboli
+  if (!id) showError(idInput);
   if (selectedScopes.length === 0) showError(scopeBtn);
   if (selectedCaps.length === 0) showError(capsBtn);
   
@@ -127,12 +140,14 @@ async function createTool() {
       endpointInput.value = validEndpoint; 
     } catch (err) {
       showError(endpointInput);
-      return alert("Attenzione: L'Endpoint URL inserito non è nel formato corretto.");
+      showToast("Attenzione: L'Endpoint URL inserito non è nel formato corretto.", "error");
+      return; 
     }
   }
 
   if (hasError) {
-    return alert("Compila tutti i campi obbligatori contrassegnati con l'asterisco (*)");
+    showToast("Compila tutti i campi obbligatori contrassegnati con l'asterisco (*)", "error");
+    return;
   }
 
   // --- 3. CONTROLLO DUPLICATI (ID UNIVOCO) ---
@@ -143,7 +158,8 @@ async function createTool() {
       if (existingTools.some(t => t.id === id)) {
         showError(idInput);
         showError(nameInput);
-        return alert(`Attenzione: L'ID generato '${id}' esiste già nel Registry. Modifica leggermente il Nome del tool per renderlo univoco.`);
+        showToast(`L'ID '${id}' esiste già. Modifica il Nome per renderlo univoco.`, "warning");
+        return;
       }
     }
   } catch (err) {
@@ -174,17 +190,24 @@ async function createTool() {
 
     if (!res.ok) {
       const err = await res.json();
-      return alert("Errore dal server: " + err.detail);
+      showToast("Errore dal server: " + (err.detail || "Registrazione fallita"), "error");
+      return;
     }
+
+    // TOAST DI SUCCESSO (VERDE) INSERITO QUI
+    showToast("Nuovo Tool registrato con successo!", "success");
 
     // Pulizia dei campi
     document.querySelectorAll("input[type='text']:not([readonly]), input[type='url'], textarea").forEach(el => el.value = "");
-    document.getElementById("newToolId").value = ""; // Svuotiamo anche l'ID readonly
+    document.getElementById("newToolId").value = ""; 
     document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
     document.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
     
     document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope (Settore) * ▼";
-    capsMenu.innerHTML = "";
+    
+    const capsMenu = document.getElementById("capsDropdownMenu");
+    if (capsMenu) capsMenu.innerHTML = "";
+    
     capsBtn.innerText = "Seleziona prima uno Scope...";
     capsBtn.style.background = "#f8fafc";
     capsBtn.style.color = "var(--muted)";
@@ -192,7 +215,7 @@ async function createTool() {
     
     loadTools(); 
   } catch (err) {
-    alert("Errore di connessione con il server");
+    showToast("Errore di connessione con il server", "error");
   }
 }
 
@@ -232,44 +255,135 @@ async function updateTool(toolId) {
 }
 
 // --- 4. SCOPE  ROUTER ---
+// --- 4. ROUTER (Chiamata al Microservizio AI con Human-in-the-Loop) ---
 async function runRouter() {
-  const text = document.getElementById("queryText").value;
-  const domain = document.getElementById("domainText").value.trim();
+  const text = document.getElementById("queryText").value.trim();
   const out = document.getElementById("routeResults");
-  out.innerHTML = "Elaborazione...";
-  
+
+  if (!text) {
+    return alert("Inserisci una richiesta da analizzare.");
+  }
+
+  // Feedback visivo di attesa
+  out.innerHTML = `
+    <div style="padding: 15px; border-radius: 8px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;">
+      ⏳ Invio della richiesta al Router Neurale (Porta 8002) in corso...
+    </div>`;
+
   try {
-    const res = await fetch(`${API_BASE}/router/match`, {
+    const res = await fetch("http://127.0.0.1:8002/analyze-scope", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        text,
-        domain: domain || null,
-        desired_capabilities: [],
-        top_k: 3
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text })
     });
-    
-    if (!res.ok) {
-        out.innerHTML = "Modulo Router non ancora implementato nel backend!";
-        return;
-    }
-    
+
+    if (!res.ok) throw new Error("Errore dal server Router");
+
     const data = await res.json();
-    out.innerHTML = "";
-    data.results.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "result";
-      div.innerHTML = `<strong>${item.tool_name}</strong>
-        <div class="score">Score: ${item.score}</div>
-        <div>${item.reason}</div>`;
-      out.appendChild(div);
-    });
+    const predictions = data.predictions; // Ora è un array di risultati ordinati
+    let currentIndex = 0; // Partiamo dal vincitore (indice 0)
+
+    // Funzione interna per generare (o aggiornare) l'interfaccia
+    function renderResult() {
+      const currentPred = predictions[currentIndex];
+      const detectedScope = currentPred.scope;
+      const isNlp = detectedScope === "nlp";
+      
+      // Controllo se ci sono altre opzioni nella lista per disabilitare il tasto "Prossimo" alla fine
+      const hasMore = currentIndex < predictions.length - 1;
+
+    // Stili dinamici (Aggiornati per la nuova UI)
+      const btnStyle = isNlp 
+        ? "background: #10b981; color: white; cursor: pointer;" 
+        : "background: #e2e8f0; color: #94a3b8; cursor: not-allowed;";
+      
+      const btnText = isNlp 
+        ? "Conferma e vai allo Strumento" 
+        : "Nessun Tool attivo"; // Testo accorciato per un layout più pulito
+        
+      const nextBtnBg = hasMore ? '#f59e0b' : '#e2e8f0';
+      const nextBtnColor = hasMore ? 'white' : '#94a3b8';
+      const nextBtnCursor = hasMore ? 'pointer' : 'not-allowed';
+
+      // Disegniamo la Card (Design State of the Art)
+      out.innerHTML = `
+        <div style="border: 1px solid #bae6fd; padding: 20px; border-radius: 8px; margin-top: 20px; background: #f0f9ff;">
+          
+          <h4 style="margin: 0 0 8px 0; color: #0284c7; font-size: 1.1em;">🔍 Routing Semantico Completato</h4>
+          <p style="margin: 0 0 16px 0; font-size: 0.95em; color: #334155;">Il modello neurale ha classificato la tua richiesta:</p>
+          
+          <!-- Box Risultato Centrale -->
+          <div style="background: white; border: 1px solid #e0f2fe; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <span style="font-size: 0.82em; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+              Scope Proposto (${currentIndex + 1} di ${predictions.length})
+            </span>
+            <div style="margin: 12px 0;">
+              <span style="background: #e0f2fe; color: #0284c7; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 1.25em; border: 1px solid #bae6fd;">
+                ${detectedScope}
+              </span>
+            </div>
+            <div style="font-size: 0.9em; font-weight: 600; color: ${currentIndex === 0 ? '#10b981' : '#f59e0b'};">
+              Affidabilità: ${currentPred.confidence}%
+            </div>
+          </div>
+
+          <!-- Pulsantiera Flex -->
+          <div style="display: flex; gap: 12px;">
+            <button id="nextScopeBtn" ${!hasMore ? "disabled" : ""} style="flex: 1; background: ${nextBtnBg}; color: ${nextBtnColor}; cursor: ${nextBtnCursor}; padding: 12px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.95em; transition: filter 0.2s;">
+              Non è questo?
+            </button>
+            <button id="confirmScopeBtn" ${isNlp ? "" : "disabled"} style="flex: 2; ${btnStyle} padding: 12px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.95em; transition: filter 0.2s;">
+              ${btnText}
+            </button>
+          </div>
+
+          <p style="margin: 16px 0 0 0; font-size: 0.85em; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; text-align: center;">
+            <em>${isNlp ? "Procedendo verrai reindirizzato all'Area di Test." : "L'unico strumento esperto connesso appartiene al dominio 'nlp'."}</em>
+          </p>
+          
+        </div>
+      `;
+
+      // LOGICA DEI PULSANTI
+      
+      // 1. Tasto "Prova il prossimo" (Cambia lo scope visualizzato)
+      if (hasMore) {
+        document.getElementById("nextScopeBtn").addEventListener("click", () => {
+          currentIndex++;
+          renderResult(); // Ricarica la card con l'indice successivo
+        });
+      }
+
+      // 2. Tasto "Conferma" (Mostra l'area, scroll e copia il testo)
+      if (isNlp) {
+        document.getElementById("confirmScopeBtn").addEventListener("click", () => {
+          const testSection = document.getElementById("testTextInput").closest('section');
+          
+          // 1. Rendi visibile l'area di test prima di fare lo scroll
+          testSection.style.display = "block";
+          
+          // 2. Esegui lo scroll fluido
+          testSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          
+          // 3. Effetto di evidenziazione visiva
+          testSection.style.transition = "background-color 0.5s ease";
+          testSection.style.backgroundColor = "#fef3c7"; 
+          
+  
+          
+          // 4. Ripristino del colore di sfondo
+          setTimeout(() => { testSection.style.backgroundColor = "white"; }, 1200);
+        });
+      }
+    }
+
+    // Lanciamo la renderizzazione per la prima volta (Indice 0, il più probabile)
+    renderResult();
+
   } catch (err) {
-    out.innerHTML = "Errore durante il routing (il server è spento o la rotta non esiste).";
+    out.innerHTML = `<span style="color: #ef4444; font-weight: bold;">Errore: Impossibile connettersi al Router. Assicurati che il server sulla porta 8002 sia in esecuzione.</span>`;
   }
 }
-
 // --- ASSEGNAZIONE EVENTI AI PULSANTI ---
 document.getElementById("loadToolsBtn").addEventListener("click", async () => {
   const btn = document.getElementById("loadToolsBtn");
@@ -277,7 +391,7 @@ document.getElementById("loadToolsBtn").addEventListener("click", async () => {
 
   if (isToolsListVisible) {
     toolsList.innerHTML = "";
-    btn.innerText = "Mostra Tools Registrati";
+    btn.innerText = "Mostra Tools Registrati 🔽";
     isToolsListVisible = false;
   } else {
     await loadTools();
@@ -483,4 +597,36 @@ async function testSentimentTool() {
     alert("Impossibile connettersi al Tool. Assicurati che sia in esecuzione sulla porta 8001.");
     resultDiv.style.display = "none";
   }
+}
+
+// --- SISTEMA DI NOTIFICHE TOAST ---
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  // Crea l'elemento notifica
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  // Icona in base al tipo
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️'
+  };
+
+  toast.innerHTML = `<span>${icons[type]}</span> <span>${message}</span>`;
+  
+  // Aggiunge la notifica allo schermo
+  container.appendChild(toast);
+  
+  // Fa partire l'animazione di entrata dopo un istante
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // Rimuove la notifica dopo 3.5 secondi
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // Aspetta che finisca l'animazione di uscita prima di eliminare il nodo dal DOM
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
 }

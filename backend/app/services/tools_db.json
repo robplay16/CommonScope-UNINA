@@ -71,27 +71,6 @@
         "owner": "lab"
     },
     {
-        "id": "test-1",
-        "name": "TEST1",
-        "description": "ness",
-        "version": "0.1.0",
-        "scope_tags": [
-            "vision"
-        ],
-        "capabilities": [
-            "extract_text"
-        ],
-        "input_schema": {
-            "type": "text"
-        },
-        "output_schema": {
-            "type": "json"
-        },
-        "endpoint": "http://test",
-        "status": "active",
-        "owner": "io"
-    },
-    {
         "id": "nlp-sentiment-local-1",
         "name": "Analizzatore di Sentimenti Base",
         "description": "modello NLP leggero per estrarre la polarit\u00e0 da testi brevi.",
@@ -109,6 +88,27 @@
             "type": "json"
         },
         "endpoint": "http://127.0.0.1:8001/analyze-sentiment",
+        "status": "active",
+        "owner": "lab"
+    },
+    {
+        "id": "tes11",
+        "name": "tes11",
+        "description": "",
+        "version": "0.1.0",
+        "scope_tags": [
+            "vision"
+        ],
+        "capabilities": [
+            "classify_image"
+        ],
+        "input_schema": {
+            "type": "any"
+        },
+        "output_schema": {
+            "type": "any"
+        },
+        "endpoint": "https://a",
         "status": "active",
         "owner": "lab"
     }
