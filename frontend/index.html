@@ -107,7 +107,7 @@
   <main class="layout">
     
     <!-- 1. SEZIONE TOOL REGISTRY -->
-    <section class="card" style="border-top: 4px solid #3b82f6;">
+<section class="card" style="border-top: 4px solid #3b82f6;">
       <h2>📑 Tool Registry</h2>
       <p class="subtitle">Mostra i tool attualmente caricati nel backend.</p>
       
@@ -193,28 +193,13 @@
           </div>
         </div>
 
-        <!-- Riga 3 -->
-        <select id="newToolInput" style="background: white; color: var(--text, #333); cursor: pointer;">
-          <option value="" disabled selected>Tipo Input ▼</option>
-          <option value="any">any (Qualsiasi)</option>
-          <option value="text">text (Testo)</option>
-          <option value="image">image (Immagine)</option>
-          <option value="image_or_pdf">image_or_pdf (Immagine o PDF)</option>
-          <option value="audio">audio (Audio)</option>
-          <option value="video">video (Video)</option>
-          <option value="json">json (Dati Strutturati)</option>
-          <option value="locations">locations (Coordinate/Mappe)</option>
+        <!-- Riga 3 - AGGIORNATA PER SUPPORTARE IL JS DINAMICO -->
+        <select id="newToolInput" disabled style="background: #f8fafc; color: #94a3b8; border: 1px solid var(--border, #cbd5e1); cursor: not-allowed;">
+          <option value="" disabled selected>Seleziona prima uno Scope...</option>
         </select>
         
-        <select id="newToolOutput" style="background: white; color: var(--text, #333); cursor: pointer;">
-          <option value="" disabled selected>Tipo Output ▼</option>
-          <option value="any">any (Qualsiasi)</option>
-          <option value="text">text (Testo)</option>
-          <option value="label">label (Etichetta/Categoria)</option>
-          <option value="json">json (Dati Strutturati)</option>
-          <option value="audio">audio (Audio)</option>
-          <option value="image">image (Immagine)</option>
-          <option value="route">route (Percorso)</option>
+        <select id="newToolOutput" disabled style="background: #f8fafc; color: #94a3b8; border: 1px solid var(--border, #cbd5e1); cursor: not-allowed;">
+          <option value="" disabled selected>Seleziona prima uno Scope...</option>
         </select>
         
         <!-- Riga 4 -->
@@ -244,6 +229,7 @@
     </section>
 
     <!-- 3. SEZIONE TEST TOOL NLP -->
+     <!--
     <section id="testAreaSection" class="card" style="display: none; border-top: 4px solid #8b5cf6;">
       <h2>🧪 Area di Test: Analisi Sentiment</h2>
       <p class="subtitle">Questa sezione invia una richiesta reale al Tool Server (porta 8001).</p>
@@ -255,7 +241,6 @@
       
       <button onclick="testSentimentTool()" style="background: #8b5cf6;">Analizza con Tool Esterno</button>
 
-      <!-- Area Risultato -->
       <div id="testResult" style="margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border, #e2e8f0); display: none;">
         <h4 style="margin: 0 0 12px 0; color: #1e293b;">Risultato dell'Analisi:</h4>
         <p style="margin: 6px 0; font-size: 0.95em;"><strong>Testo:</strong> <span id="resText"></span></p>
@@ -263,7 +248,8 @@
         <p style="margin: 6px 0; font-size: 0.95em;"><strong>Polarity Score:</strong> <span id="resScore"></span></p>
       </div>
     </section>
-
+-->
+    
     <!-- 4. SEZIONE ROADMAP -->
     <section class="card wide">
       <h2>Roadmap studenti</h2>

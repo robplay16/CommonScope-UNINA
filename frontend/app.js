@@ -280,32 +280,55 @@ async function runRouter() {
     if (!res.ok) throw new Error("Errore dal server Router");
 
     const data = await res.json();
-    const predictions = data.predictions; // Ora è un array di risultati ordinati
-    let currentIndex = 0; // Partiamo dal vincitore (indice 0)
+    const predictions = data.predictions; 
+    let currentIndex = 0; 
 
-    // Funzione interna per generare (o aggiornare) l'interfaccia
+    const matchedTool = {
+        id: "nlp-sentiment-local-1",
+        name: "Analizzatore di Sentimenti Base",
+        description: "modello NLP leggero per estrarre la polarità da testi brevi.",
+        capabilities: ["sentiment_analysis"],
+        endpoint: "http://127.0.0.1:8001/analyze-sentiment"
+    };
+
     function renderResult() {
       const currentPred = predictions[currentIndex];
       const detectedScope = currentPred.scope;
       const isNlp = detectedScope === "nlp";
       
-      // Controllo se ci sono altre opzioni nella lista per disabilitare il tasto "Prossimo" alla fine
       const hasMore = currentIndex < predictions.length - 1;
 
-    // Stili dinamici (Aggiornati per la nuova UI)
       const btnStyle = isNlp 
         ? "background: #10b981; color: white; cursor: pointer;" 
         : "background: #e2e8f0; color: #94a3b8; cursor: not-allowed;";
       
       const btnText = isNlp 
         ? "Conferma e vai allo Strumento" 
-        : "Nessun Tool attivo"; // Testo accorciato per un layout più pulito
+        : "Nessun Tool attivo";
         
       const nextBtnBg = hasMore ? '#f59e0b' : '#e2e8f0';
       const nextBtnColor = hasMore ? 'white' : '#94a3b8';
       const nextBtnCursor = hasMore ? 'pointer' : 'not-allowed';
 
-      // Disegniamo la Card (Design State of the Art)
+      const toolMatchHtml = isNlp ? `
+        <div style="margin-bottom: 20px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; text-align: left; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="font-size: 0.75em; color: #10b981; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">
+            ✓ Strumento Compatibile Trovato
+          </div>
+          <h5 style="margin: 0 0 4px 0; color: #0f172a; font-size: 1.05em;">
+            ${matchedTool.name} <span style="font-size: 0.8em; color: #64748b; font-weight: 400;">(${matchedTool.id})</span>
+          </h5>
+          <p style="margin: 0 0 10px 0; font-size: 0.85em; color: #475569;">
+            ${matchedTool.description}
+          </p>
+          <div style="font-size: 0.8em; color: #334155; line-height: 1.6;">
+            <strong>Capability:</strong> <span style="background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 600;">${matchedTool.capabilities[0]}</span><br>
+            <strong>Endpoint:</strong> <code style="color: #d946ef; background: #fdf4ff; padding: 2px 6px; border-radius: 4px;">${matchedTool.endpoint}</code>
+          </div>
+        </div>
+      ` : '';
+
+      // --- DISEGNO DELLA CARD (COMPRESA AREA DI TEST) ---
       out.innerHTML = `
         <div style="border: 1px solid #bae6fd; padding: 20px; border-radius: 8px; margin-top: 20px; background: #f0f9ff;">
           
@@ -313,7 +336,7 @@ async function runRouter() {
           <p style="margin: 0 0 16px 0; font-size: 0.95em; color: #334155;">Il modello neurale ha classificato la tua richiesta:</p>
           
           <!-- Box Risultato Centrale -->
-          <div style="background: white; border: 1px solid #e0f2fe; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <div style="background: white; border: 1px solid #e0f2fe; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <span style="font-size: 0.82em; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
               Scope Proposto (${currentIndex + 1} di ${predictions.length})
             </span>
@@ -327,6 +350,8 @@ async function runRouter() {
             </div>
           </div>
 
+          ${toolMatchHtml}
+
           <!-- Pulsantiera Flex -->
           <div style="display: flex; gap: 12px;">
             <button id="nextScopeBtn" ${!hasMore ? "disabled" : ""} style="flex: 1; background: ${nextBtnBg}; color: ${nextBtnColor}; cursor: ${nextBtnCursor}; padding: 12px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.95em; transition: filter 0.2s;">
@@ -338,46 +363,66 @@ async function runRouter() {
           </div>
 
           <p style="margin: 16px 0 0 0; font-size: 0.85em; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 12px; text-align: center;">
-            <em>${isNlp ? "Procedendo verrai reindirizzato all'Area di Test." : "L'unico strumento esperto connesso appartiene al dominio 'nlp'."}</em>
+            <em>${isNlp ? "Procedendo verrai reindirizzato all'Area di Test e la richiesta verrà inoltrata al tool indicato." : "L'unico strumento esperto connesso appartiene al dominio 'nlp'."}</em>
           </p>
+
+          <!-- NUOVA AREA DI TEST (Inizialmente nascosta) -->
+          <div id="dynamicTestArea" style="display: none; margin-top: 24px; padding-top: 24px; border-top: 2px dashed #bae6fd; text-align: left;">
+            <h4 style="margin: 0 0 12px 0; color: #6b21a8; font-size: 1.1em;">🧪 Area di Test: Analisi Sentiment</h4>
+            <p style="margin: 0 0 16px 0; font-size: 0.9em; color: #475569;">Invia una richiesta reale al Tool Server (Porta 8001).</p>
+            
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #1e293b;">Testo da analizzare:</label>
+            <textarea id="testTextInput" rows="3" placeholder="Scrivi una frase in inglese (es. This project is very beautiful oppure This project is terrible)" style="width: 100%; resize: none; margin-bottom: 12px; font-family: inherit; font-size: 0.95rem; padding: 12px 16px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box;"></textarea>
+            
+            <button id="runDynamicTestBtn" style="width: 100%; background: #8b5cf6; color: white; border: none; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95em; transition: filter 0.2s;">
+              Analizza con Tool Esterno
+            </button>
+
+            <!-- Box Risultato Test -->
+            <div id="testResult" style="margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; display: none;">
+              <h4 style="margin: 0 0 12px 0; color: #1e293b;">Risultato dell'Analisi:</h4>
+              <p style="margin: 6px 0; font-size: 0.95em;"><strong>Testo:</strong> <span id="resText"></span></p>
+              <p style="margin: 6px 0; font-size: 0.95em;"><strong>Sentiment:</strong> <span id="resLabel" style="font-weight: bold; padding: 2px 8px; border-radius: 4px;"></span></p>
+              <p style="margin: 6px 0; font-size: 0.95em;"><strong>Polarity Score:</strong> <span id="resScore"></span></p>
+            </div>
+          </div>
           
         </div>
       `;
 
       // LOGICA DEI PULSANTI
       
-      // 1. Tasto "Prova il prossimo" (Cambia lo scope visualizzato)
       if (hasMore) {
         document.getElementById("nextScopeBtn").addEventListener("click", () => {
           currentIndex++;
-          renderResult(); // Ricarica la card con l'indice successivo
+          renderResult(); 
         });
       }
 
-      // 2. Tasto "Conferma" (Mostra l'area, scroll e copia il testo)
       if (isNlp) {
         document.getElementById("confirmScopeBtn").addEventListener("click", () => {
-          const testSection = document.getElementById("testTextInput").closest('section');
+          const testArea = document.getElementById("dynamicTestArea");
           
-          // 1. Rendi visibile l'area di test prima di fare lo scroll
-          testSection.style.display = "block";
+          testArea.style.display = "block";
+          testArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
           
-          // 2. Esegui lo scroll fluido
-          testSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Modifica il bottone Conferma per indicare che è attivo
+          const confirmBtn = document.getElementById("confirmScopeBtn");
+          confirmBtn.style.background = "#94a3b8";
+          confirmBtn.innerText = "Strumento Attivo ↓";
+          confirmBtn.disabled = true;
+
+          testArea.style.transition = "background-color 0.5s ease";
+          testArea.style.backgroundColor = "#fef3c7"; 
           
-          // 3. Effetto di evidenziazione visiva
-          testSection.style.transition = "background-color 0.5s ease";
-          testSection.style.backgroundColor = "#fef3c7"; 
-          
-  
-          
-          // 4. Ripristino del colore di sfondo
-          setTimeout(() => { testSection.style.backgroundColor = "white"; }, 1200);
+          setTimeout(() => { testArea.style.backgroundColor = "transparent"; }, 1200);
+
+          // AGGANCIA LA FUNZIONE DI TEST AL NUOVO BOTTONE
+          document.getElementById("runDynamicTestBtn").addEventListener("click", testSentimentTool);
         });
       }
     }
 
-    // Lanciamo la renderizzazione per la prima volta (Indice 0, il più probabile)
     renderResult();
 
   } catch (err) {
@@ -548,20 +593,15 @@ document.getElementById("capsDropdownBtn").addEventListener("click", function() 
 });
 
 // --- FUNZIONE DI TEST PER IL TOOL NLP ESTERNO (Porta 8001) ---
+// --- FUNZIONE PER TESTARE IL TOOL SERVER (Porta 8001) ---
 async function testSentimentTool() {
   const textInput = document.getElementById("testTextInput").value.trim();
-  const resultDiv = document.getElementById("testResult");
-  
-  if (!textInput) {
-    return alert("Inserisci una frase da analizzare!");
-  }
+  const resBox = document.getElementById("testResult");
 
-  resultDiv.style.display = "block";
-  document.getElementById("resText").innerText = "Elaborazione in corso...";
-  document.getElementById("resLabel").innerText = "...";
-  document.getElementById("resLabel").style.background = "transparent";
-  document.getElementById("resLabel").style.color = "black";
-  document.getElementById("resScore").innerText = "...";
+  if (!textInput) {
+    showToast("Inserisci un testo da analizzare.", "warning");
+    return;
+  }
 
   try {
     const res = await fetch("http://127.0.0.1:8001/analyze-sentiment", {
@@ -570,35 +610,40 @@ async function testSentimentTool() {
       body: JSON.stringify({ text: textInput })
     });
 
-    if (!res.ok) {
-      throw new Error("Errore dal server del tool");
-    }
+    if (!res.ok) throw new Error("Errore Tool Server");
 
     const data = await res.json();
-
+    
+    // Mostra il box dei risultati
+    resBox.style.display = "block";
+    
+    // Popola i dati usando le chiavi esatte restituite da FastAPI
     document.getElementById("resText").innerText = data.text_analyzed;
-    document.getElementById("resScore").innerText = data.polarity_score;
+    document.getElementById("resScore").innerText = data.polarity_score.toFixed(2);
     
     const labelSpan = document.getElementById("resLabel");
-    labelSpan.innerText = data.sentiment_label;
+    labelSpan.innerText = data.sentiment_label; // Mostrerà POSITIVE, NEGATIVE o NEUTRAL
     
-    if (data.sentiment_label === "POSITIVE") {
-      labelSpan.style.background = "#dcfce7";
-      labelSpan.style.color = "#166534";
-    } else if (data.sentiment_label === "NEGATIVE") {
-      labelSpan.style.background = "#fee2e2";
-      labelSpan.style.color = "#991b1b";
+    // Colora la label in base al sentiment (forziamo il minuscolo per il controllo)
+    const sentimentLower = data.sentiment_label.toLowerCase();
+    
+    if (sentimentLower === "positive") {
+      labelSpan.style.backgroundColor = "#dcfce7";
+      labelSpan.style.color = "#16a34a";
+    } else if (sentimentLower === "negative") {
+      labelSpan.style.backgroundColor = "#fee2e2";
+      labelSpan.style.color = "#dc2626";
     } else {
-      labelSpan.style.background = "#f1f5f9";
+      labelSpan.style.backgroundColor = "#f1f5f9";
       labelSpan.style.color = "#475569";
     }
 
+    showToast("Analisi completata con successo!", "success");
+
   } catch (err) {
-    alert("Impossibile connettersi al Tool. Assicurati che sia in esecuzione sulla porta 8001.");
-    resultDiv.style.display = "none";
+    showToast("Impossibile connettersi al Tool Server. Assicurati che sia avviato sulla porta 8001.", "error");
   }
 }
-
 // --- SISTEMA DI NOTIFICHE TOAST ---
 function showToast(message, type = 'success') {
   const container = document.getElementById('toast-container');
@@ -630,3 +675,92 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 400);
   }, 3500);
 }
+
+
+// 1. Mappa di Input e Output coerenti per ogni Scope
+const scopeIOMap = {
+  "vision": { inputs: ["image", "video", "any"], outputs: ["json", "label", "image", "text", "any"] },
+  "classification": { inputs: ["text", "image", "audio", "json", "any"], outputs: ["label", "json", "any"] },
+  "document": { inputs: ["image_or_pdf", "image", "any"], outputs: ["text", "json", "any"] },
+  "ocr": { inputs: ["image_or_pdf", "image", "any"], outputs: ["text", "json", "any"] },
+  "planning": { inputs: ["json", "locations", "any"], outputs: ["json", "any"] },
+  "maps": { inputs: ["locations", "json", "any"], outputs: ["json", "route", "any"] },
+  "routing": { inputs: ["locations", "json", "any"], outputs: ["route", "json", "any"] },
+  "nlp": { inputs: ["text", "any"], outputs: ["text", "label", "json", "any"] },
+  "text": { inputs: ["text", "any"], outputs: ["text", "json", "any"] },
+  "analysis": { inputs: ["json", "text", "any"], outputs: ["json", "text", "any"] },
+  "audio": { inputs: ["audio", "any"], outputs: ["text", "label", "json", "audio", "any"] },
+  "data": { inputs: ["json", "text", "any"], outputs: ["json", "any"] }
+};
+
+// 2. Etichette belle da mostrare all'utente nell'interfaccia
+const ioLabels = {
+  "any": "any (Qualsiasi)",
+  "text": "text (Testo)",
+  "image": "image (Immagine)",
+  "image_or_pdf": "image_or_pdf (Immagine o PDF)",
+  "audio": "audio (Audio)",
+  "video": "video (Video)",
+  "json": "json (Dati Strutturati)",
+  "locations": "locations (Coordinate/Mappe)",
+  "label": "label (Etichetta/Categoria)",
+  "route": "route (Percorso)"
+};
+
+// 3. Funzione che aggiorna la UI in base agli Scope selezionati
+function updateIOMenus() {
+  const selectedScopes = Array.from(document.querySelectorAll('#scopeDropdownMenu input:checked')).map(cb => cb.value);
+  const inputSelect = document.getElementById("newToolInput");
+  const outputSelect = document.getElementById("newToolOutput");
+
+  // Se nessun Scope è selezionato, blocca e resetta i menu
+  if (selectedScopes.length === 0) {
+    inputSelect.innerHTML = '<option value="" disabled selected>Seleziona prima uno Scope...</option>';
+    inputSelect.disabled = true;
+    inputSelect.style.background = "#f8fafc";
+    inputSelect.style.color = "#94a3b8";
+    inputSelect.style.cursor = "not-allowed";
+
+    outputSelect.innerHTML = '<option value="" disabled selected>Seleziona prima uno Scope...</option>';
+    outputSelect.disabled = true;
+    outputSelect.style.background = "#f8fafc";
+    outputSelect.style.color = "#94a3b8";
+    outputSelect.style.cursor = "not-allowed";
+    return;
+  }
+
+  // Raccogli input e output unici basati sugli scope selezionati (Set evita i duplicati)
+  let validInputs = new Set();
+  let validOutputs = new Set();
+
+  selectedScopes.forEach(scope => {
+    if (scopeIOMap[scope]) {
+      scopeIOMap[scope].inputs.forEach(i => validInputs.add(i));
+      scopeIOMap[scope].outputs.forEach(o => validOutputs.add(o));
+    }
+  });
+
+  // Abilita e popola il menu Input
+  inputSelect.disabled = false;
+  inputSelect.style.background = "white";
+  inputSelect.style.color = "var(--text, #333)";
+  inputSelect.style.cursor = "pointer";
+  inputSelect.innerHTML = '<option value="" disabled selected>Tipo Input ▼</option>' + 
+    Array.from(validInputs).map(val => `<option value="${val}">${ioLabels[val] || val}</option>`).join('');
+
+  // Abilita e popola il menu Output
+  outputSelect.disabled = false;
+  outputSelect.style.background = "white";
+  outputSelect.style.color = "var(--text, #333)";
+  outputSelect.style.cursor = "pointer";
+  outputSelect.innerHTML = '<option value="" disabled selected>Tipo Output ▼</option>' + 
+    Array.from(validOutputs).map(val => `<option value="${val}">${ioLabels[val] || val}</option>`).join('');
+}
+
+// 4. Collega la funzione al click sui checkbox degli scope
+document.querySelectorAll('#scopeDropdownMenu input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    // Al cambio del checkbox aggiorniamo gli Input/Output (e immagino anche le capabilities!)
+    updateIOMenus();
+  });
+});
