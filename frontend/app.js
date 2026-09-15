@@ -1,6 +1,53 @@
 // Backend FastAPI in locale.
 const API_BASE = "http://localhost:8000/api";
 
+// --- VARIABILI DI STATO GLOBALI ---
+let editingToolId = null; 
+let editingToolVersion = "1.0.0"; 
+
+// --- HELPER: Aumenta la minor version (es. da 1.0.0 a 1.1.0) ---
+function getNextMinorVersion(versionStr) {
+  if (!versionStr) return "1.1.0";
+  const parts = versionStr.split(".");
+  if (parts.length === 3) {
+    let minor = parseInt(parts[1], 10);
+    return `${parts[0]}.${minor + 1}.${parts[2]}`;
+  }
+  return "1.1.0"; 
+}
+// --- HELPER: Aumenta la major version (es. da 1.1.0 a 2.1.0) ---
+function getNextMajorVersion(versionStr) {
+  if (!versionStr) return "2.0.0";
+  const parts = versionStr.split(".");
+  if (parts.length === 3) {
+    let major = parseInt(parts[0], 10);
+    return `${major + 1}.0.0`; // ${parts[1]}.${parts[2]} non viene più considerato, resetta a 0
+  }
+  return "2.0.0"; 
+}
+// --- HELPER: Compara due versioni (Ritorna -1 se v1 è maggiore, 1 se v2 è maggiore) ---
+function compareVersions(v1, v2) {
+  const p1 = (v1 || "1.0.0").split('.').map(Number);
+  const p2 = (v2 || "1.0.0").split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (p1[i] > p2[i]) return -1;
+    if (p1[i] < p2[i]) return 1;
+  }
+  return 0;
+}
+
+// --- HELPER: Mostra/Nasconde lo storico delle versioni ---
+function toggleHistory(baseId) {
+  const container = document.getElementById(`history_${baseId}`);
+  const btn = document.getElementById(`toggleBtn_${baseId}`);
+  if (container.style.display === "none") {
+    container.style.display = "block";
+    btn.innerHTML = "▲📆 Nascondi versioni precedenti";
+  } else {
+    container.style.display = "none";
+    btn.innerHTML = `▼📆 Mostra versioni precedenti (${container.children.length})`;
+  }
+}
 // --- 1. LETTURA E CANCELLAZIONE ---
 let isToolsListVisible = false; 
 let currentTools = []; 
@@ -17,32 +64,81 @@ async function loadTools() {
     currentTools = await res.json(); 
     toolsList.innerHTML = "";
     
+    // 1. Raggruppa i tool per "ID base" (rimuovendo il suffisso _X.Y.Z se esiste)
+    const groupedTools = {};
     currentTools.forEach(tool => {
+      const baseId = tool.id.replace(/_\d+\.\d+\.\d+$/, "");
+      if (!groupedTools[baseId]) groupedTools[baseId] = [];
+      groupedTools[baseId].push(tool);
+    });
+
+    // 2. Disegna i gruppi
+    Object.keys(groupedTools).forEach(baseId => {
+      // Ordina il gruppo dal più recente (indice 0) al più vecchio
+      const group = groupedTools[baseId].sort((a, b) => compareVersions(a.version, b.version));
+      
+      const latestTool = group[0];
+      const olderTools = group.slice(1);
+
+      // Crea l'elemento lista (li) principale
       const li = document.createElement("li");
       li.style.marginBottom = "15px";
       li.style.paddingBottom = "10px";
       li.style.borderBottom = "1px dashed var(--border)";
       
-      const tags = tool.scope_tags ? tool.scope_tags.join(", ") : "";
-      const caps = tool.capabilities ? tool.capabilities.join(", ") : "";
+      // Inserisce la Card per la versione PIÙ RECENTE
+      li.innerHTML = getToolCardHTML(latestTool);
 
-      li.innerHTML = `
-        <strong>${tool.name}</strong> <span style="color: var(--muted); font-size: 0.9em;">(${tool.id})</span> 
-        <span style="background: #e2e8f0; font-size: 0.75em; padding: 2px 6px; border-radius: 10px; float: right;">Owner: ${tool.owner || 'N/A'}</span>
-        <br> 
-        <span style="color: var(--text); font-size: 0.9em;">${tool.description}</span>
-        <br>
-        <span style="color: #3b82f6; font-size: 0.8em;"><strong>Tags:</strong> [${tags}]</span> | 
-        <span style="color: #8b5cf6; font-size: 0.8em;"><strong>Caps:</strong> [${caps}]</span>
-        <br>
-        <button onclick="updateTool('${tool.id}')" style="background: #f59e0b; color: white; padding: 4px 10px; font-size: 0.8em; margin-top: 8px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">Modifica</button>
-        <button onclick="deleteTool('${tool.id}')" style="background: #ef4444; color: white; padding: 4px 10px; font-size: 0.8em; margin-top: 8px; border: none; border-radius: 4px; cursor: pointer;">Elimina</button>
-      `;
+      // 3. Se ci sono versioni vecchie, aggancia il menu a tendina
+      if (olderTools.length > 0) {
+        
+        // Trova la colonna destra all'interno della card appena generata
+        const rightCol = li.querySelector('.right-actions');
+
+        // Bottone per mostrare lo storico
+        const toggleBtn = document.createElement("button");
+        toggleBtn.id = `toggleBtn_${baseId}`;
+        toggleBtn.innerHTML = `▼ 📆Mostra versioni precedenti (${olderTools.length})`;
+        
+        // Stile adattato per incastrarsi perfettamente nella colonna destra
+        toggleBtn.style.cssText = "background: #f8fafc; color: #475569; border: 1px dashed #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8em; text-align: center; width: 100%; transition: all 0.2s; margin-top: 4px;";
+        
+        // Effetto hover per dare un bel feedback visivo
+        toggleBtn.onmouseover = () => toggleBtn.style.background = "#e2e8f0";
+        toggleBtn.onmouseout = () => toggleBtn.style.background = "#f8fafc";
+        
+        toggleBtn.onclick = () => toggleHistory(baseId);
+        
+        // Inserisce il bottone esattamente nella colonna destra (se trovata)
+        if (rightCol) {
+          rightCol.appendChild(toggleBtn);
+        } else {
+          // Fallback di sicurezza in caso non trovi la classe
+          li.appendChild(toggleBtn);
+        }
+
+        // Contenitore dello storico (Nascosto di default, si apre sotto la card)
+        const historyDiv = document.createElement("div");
+        historyDiv.id = `history_${baseId}`;
+        historyDiv.style.cssText = "display: none; margin-top: 15px; margin-left: 15px; border-left: 3px solid #cbd5e1; padding-left: 15px;";
+        
+        // Aggiunge tutte le card vecchie dentro al contenitore
+        olderTools.forEach(oldTool => {
+          const oldDiv = document.createElement("div");
+          oldDiv.style.cssText = "background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px;";
+          oldDiv.innerHTML = getToolCardHTML(oldTool);
+          historyDiv.appendChild(oldDiv);
+        });
+
+        // Lo storico intero va appeso sotto la card principale (non nella colonna)
+        li.appendChild(historyDiv);
+      }
+
       toolsList.appendChild(li);
     });
 
     isToolsListVisible = true;
-    btn.innerText = "Non mostrare più 🔼";
+    btn.innerText = "🔼Non mostrare più ";
 
   } catch (err) {
     toolsList.innerHTML = "<li>Errore nel caricamento dei tool</li>";
@@ -99,21 +195,15 @@ async function createTool() {
   const selectedScopes = Array.from(document.querySelectorAll('#scopeDropdownMenu input:checked')).map(cb => cb.value);
   const selectedCaps = Array.from(document.querySelectorAll('#capsDropdownMenu input:checked')).map(cb => cb.value);
 
-  // --- 1. RESET VISIVO INIZIALE ---
+  // --- 1. RESET E CONTROLLO ERRORI ---
   const resetStyle = (element) => {
     element.style.borderColor = "var(--border)";
     element.style.backgroundColor = element.readOnly ? "#f1f5f9" : "white";
   };
   
-  resetStyle(idInput);
-  resetStyle(nameInput);
-  resetStyle(scopeBtn);
-  resetStyle(capsBtn);
-  resetStyle(endpointInput);
+  [idInput, nameInput, scopeBtn, capsBtn, endpointInput].forEach(resetStyle);
 
-  // --- 2. CONTROLLO ERRORI VISIVO ---
   let hasError = false;
-
   const showError = (element) => {
     element.style.borderColor = "#ef4444"; 
     element.style.backgroundColor = "#fef2f2";
@@ -133,7 +223,6 @@ async function createTool() {
     if (!sanitizedEndpoint.startsWith("http://") && !sanitizedEndpoint.startsWith("https://")) {
       sanitizedEndpoint = "http://" + endpointStr; 
     }
-
     try {
       new URL(sanitizedEndpoint);
       validEndpoint = sanitizedEndpoint; 
@@ -150,12 +239,12 @@ async function createTool() {
     return;
   }
 
-  // --- 3. CONTROLLO DUPLICATI (ID UNIVOCO) ---
+  // --- 2. CONTROLLO DUPLICATI INTELLIGENTE ---
   try {
     const checkRes = await fetch(`${API_BASE}/registry/tools`);
     if (checkRes.ok) {
       const existingTools = await checkRes.json();
-      if (existingTools.some(t => t.id === id)) {
+      if (existingTools.some(t => t.id === id && t.id !== editingToolId)) {
         showError(idInput);
         showError(nameInput);
         showToast(`L'ID '${id}' esiste già. Modifica il Nome per renderlo univoco.`, "warning");
@@ -163,95 +252,223 @@ async function createTool() {
       }
     }
   } catch (err) {
-    console.warn("Impossibile verificare i duplicati lato client, il server se ne occuperà.");
+    console.warn("Impossibile verificare i duplicati lato client.");
   }
 
-  // --- 4. CREAZIONE OGGETTO E INVIO ---
-  const newTool = {
-    id: id,
+  // --- 2.5 CONTROLLO MODIFICHE EFFETTIVE ---
+  if (editingToolId) {
+    const originalTool = currentTools.find(t => t.id === editingToolId);
+    if (originalTool) {
+      const currentDesc = document.getElementById("newToolDesc").value.trim();
+      const currentOwner = document.getElementById("newToolOwner").value.trim();
+      const currentInput = document.getElementById("newToolInput").value || "any";
+      const currentOutput = document.getElementById("newToolOutput").value || "any";
+
+      const isIdSame = (originalTool.id || "") === id;
+      const isNameSame = (originalTool.name || "") === name;
+      const isDescSame = (originalTool.description || "") === currentDesc;
+      const isEndpointSame = (originalTool.endpoint || "") === validEndpoint;
+      
+      const origOwner = originalTool.owner && originalTool.owner !== "<sconosciuto>" && originalTool.owner !== "N/A" ? originalTool.owner : "";
+      const currOwner = currentOwner && currentOwner !== "<sconosciuto>" && currentOwner !== "N/A" ? currentOwner : "";
+      const isOwnerSame = origOwner === currOwner;
+
+      const isInputSame = (originalTool.input_schema?.type || "any") === currentInput;
+      const isOutputSame = (originalTool.output_schema?.type || "any") === currentOutput;
+
+      const origScopes = originalTool.scope_tags || [];
+      const origCaps = originalTool.capabilities || [];
+      const areScopesSame = JSON.stringify([...origScopes].sort()) === JSON.stringify([...selectedScopes].sort());
+      const areCapsSame = JSON.stringify([...origCaps].sort()) === JSON.stringify([...selectedCaps].sort());
+
+      if (isIdSame && isNameSame && isDescSame && isEndpointSame && isOwnerSame && isInputSame && isOutputSame && areScopesSame && areCapsSame) {
+        showToast("Nessuna modifica rilevata. Cambia almeno un campo per salvare.", "warning");
+        const submitBtn = document.getElementById("createToolBtn");
+        submitBtn.style.transform = "translateX(5px)";
+        setTimeout(() => submitBtn.style.transform = "translateX(-5px)", 100);
+        setTimeout(() => submitBtn.style.transform = "translateX(0)", 200);
+        return; 
+      }
+    }
+  }
+
+  // --- 3. CALCOLO DELLA VERSIONE E DELL'ID A CASCATA ---
+  const finalVersion = editingToolId ? getNextMinorVersion(editingToolVersion) : "1.0.0";
+  
+  let finalId = id;
+  const oldBaseId = editingToolId ? editingToolId.replace(/_\d+\.\d+\.\d+$/, "") : null;
+  const newBaseId = id.replace(/_\d+\.\d+\.\d+$/, "");
+  let historyTools = [];
+
+  if (editingToolId && oldBaseId !== newBaseId) {
+    // Troviamo tutte le vecchie versioni associate a questo tool
+    historyTools = currentTools.filter(t => t.id.replace(/_\d+\.\d+\.\d+$/, "") === oldBaseId);
+    
+    // Se aveva una storia o un suffisso, assicuriamoci che il nuovo ID mantenga il suffisso
+    if (historyTools.length > 1 || editingToolId.includes("_")) {
+      finalId = `${newBaseId}_${finalVersion}`;
+    } else {
+      finalId = newBaseId;
+    }
+  }
+
+  // --- 4. CREAZIONE OGGETTO DA SALVARE ---
+  const payloadTool = {
+    id: finalId,
     name: name,
     description: document.getElementById("newToolDesc").value.trim(),
-    version: "0.1.0",
+    version: finalVersion,
     scope_tags: selectedScopes,
     capabilities: selectedCaps,    
     input_schema: { type: document.getElementById("newToolInput").value || "any" },
     output_schema: { type: document.getElementById("newToolOutput").value || "any" },
     endpoint: validEndpoint,
     status: "active",
-    owner: document.getElementById("newToolOwner").value.trim() || "lab"
+    owner: document.getElementById("newToolOwner").value.trim() || "<sconosciuto>"
   };
 
   try {
-    const res = await fetch(`${API_BASE}/registry/tools`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(newTool)
-    });
+    let res;
+    
+    if (editingToolId) {
+      if (oldBaseId !== newBaseId) {
+        // ==========================================
+        // CASO A: MIGRAZIONE A CASCATA (Nome/ID cambiato)
+        // ==========================================
+        
+        // 1. Salva la nuova versione modificata col nuovo nome/ID
+        res = await fetch(`${API_BASE}/registry/tools`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payloadTool)
+        });
+
+        if (res.ok) {
+          // 2. Elimina il record esatto che stavamo modificando
+          await fetch(`${API_BASE}/registry/tools/${editingToolId}`, { method: "DELETE" });
+
+          // 3. Migra tutte le versioni precedenti dello storico al nuovo ID e nuovo Nome
+          for (const oldT of historyTools) {
+            if (oldT.id === editingToolId) continue; // Già gestito
+            
+            // Crea il clone aggiornato della vecchia versione
+            const migratedTool = { 
+              ...oldT, 
+              id: `${newBaseId}_${oldT.version}`, 
+              name: name // Aggiorniamo anche il nome per coerenza!
+            };
+            
+            // Salva la versione vecchia sotto il nuovo ID base
+            await fetch(`${API_BASE}/registry/tools`, {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify(migratedTool)
+            });
+            
+            // Elimina la versione vecchia rimasta orfana col vecchio ID
+            await fetch(`${API_BASE}/registry/tools/${oldT.id}`, { method: "DELETE" });
+          }
+        }
+
+      } else if (editingToolId !== finalId) {
+        // CASO B: L'ID è cambiato ma non la base (es. aggiunto suffisso manualmente)
+        res = await fetch(`${API_BASE}/registry/tools`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payloadTool)
+        });
+        if (res.ok) await fetch(`${API_BASE}/registry/tools/${editingToolId}`, { method: "DELETE" });
+        
+      } else {
+        // CASO C: Niente modifiche all'ID, normale aggiornamento
+        res = await fetch(`${API_BASE}/registry/tools/${editingToolId}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payloadTool)
+        });
+      }
+      
+    } else {
+      // SIAMO IN MODALITÀ CREAZIONE NUOVO TOOL
+      res = await fetch(`${API_BASE}/registry/tools`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payloadTool)
+      });
+    }
 
     if (!res.ok) {
       const err = await res.json();
-      showToast("Errore dal server: " + (err.detail || "Registrazione fallita"), "error");
+      showToast("Errore dal server: " + (err.detail || "Operazione fallita"), "error");
       return;
     }
 
-    // TOAST DI SUCCESSO (VERDE) INSERITO QUI
-    showToast("Nuovo Tool registrato con successo!", "success");
+    showToast(editingToolId ? `Tool aggiornato con successo alla v${finalVersion}!` : "Nuovo Tool registrato con successo!", "success");
 
-    // Pulizia dei campi
-    document.querySelectorAll("input[type='text']:not([readonly]), input[type='url'], textarea").forEach(el => el.value = "");
-    document.getElementById("newToolId").value = ""; 
-    document.querySelectorAll("input[type='checkbox']").forEach(cb => cb.checked = false);
-    document.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
-    
-    document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope (Settore) * ▼";
-    
-    const capsMenu = document.getElementById("capsDropdownMenu");
-    if (capsMenu) capsMenu.innerHTML = "";
-    
-    capsBtn.innerText = "Seleziona prima uno Scope...";
-    capsBtn.style.background = "#f8fafc";
-    capsBtn.style.color = "var(--muted)";
-    capsBtn.style.cursor = "not-allowed";
-    
+    resetFormAfterSave();
     loadTools(); 
   } catch (err) {
     showToast("Errore di connessione con il server", "error");
   }
 }
-
 // --- 3. AGGIORNAMENTO SICURO ---
 async function updateTool(toolId) {
-  const originalTool = currentTools.find(t => t.id === toolId);
-  if (!originalTool) return;
+  const tool = currentTools.find(t => t.id === toolId);
+  if (!tool) return;
 
-  const newName = prompt(`Modifica il nome per ${toolId}:`, originalTool.name);
-  if (newName === null) return; 
-  
-  const newDesc = prompt(`Modifica la descrizione per ${toolId}:`, originalTool.description);
-  if (newDesc === null) return;
+  // 1. Imposta lo stato globale in modalità "Modifica"
+  editingToolId = tool.id;
+  editingToolVersion = tool.version || "1.0.0";
 
-  const updatedTool = { 
-    ...originalTool, 
-    name: newName.trim(), 
-    description: newDesc.trim() 
-  };
+  // 2. Popola i campi di base
+  document.getElementById("newToolName").value = tool.name;
+  document.getElementById("newToolId").value = tool.id;
+  document.getElementById("newToolDesc").value = tool.description || "";
+  document.getElementById("newToolEndpoint").value = tool.endpoint;
+  document.getElementById("newToolOwner").value = tool.owner || "";
 
-  try {
-    const res = await fetch(`${API_BASE}/registry/tools/${toolId}`, {
-      method: "PUT",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(updatedTool)
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      return alert("Errore dal server: " + err.detail);
+  // 3. Popola gli Scope (e scatena gli eventi per generare I/O e Capabilities)
+  let scopeCount = 0;
+  document.querySelectorAll('#scopeDropdownMenu input[type="checkbox"]').forEach(cb => {
+    cb.checked = tool.scope_tags.includes(cb.value);
+    if (cb.checked) {
+      scopeCount++;
+      // Simula il click per attivare la tua logica dinamica!
+      cb.dispatchEvent(new Event('change')); 
     }
+  });
+  document.getElementById("scopeDropdownBtn").innerText = `Selezionati (${scopeCount}) ▼`;
 
-    loadTools(); 
-  } catch (err) {
-    alert("Errore durante l'aggiornamento");
-  }
+  // 4. Popola Capabilities e I/O (usiamo un minuscolo delay per permettere al DOM di aggiornarsi)
+  setTimeout(() => {
+    let capsCount = 0;
+    document.querySelectorAll('#capsDropdownMenu input[type="checkbox"]').forEach(cb => {
+      cb.checked = tool.capabilities.includes(cb.value);
+      if (cb.checked) capsCount++;
+    });
+    
+    document.getElementById("capsDropdownBtn").innerText = capsCount > 0 
+      ? `Selezionate (${capsCount}) ▼` 
+      : "Seleziona prima uno Scope...";
+    
+    if (tool.input_schema && tool.input_schema.type) {
+        document.getElementById("newToolInput").value = tool.input_schema.type;
+    }
+    if (tool.output_schema && tool.output_schema.type) {
+        document.getElementById("newToolOutput").value = tool.output_schema.type;
+    }
+  }, 100);
+
+  // 5. Trasforma il bottone principale
+  const submitBtn = document.getElementById("createToolBtn");
+  submitBtn.innerText = `💾 Salva Modifiche (v${getNextMinorVersion(editingToolVersion)})`;
+  submitBtn.style.background = "#f59e0b"; // Arancione
+
+  // 6. Scroll fluido verso la form
+  submitBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+  showToast("Modalità modifica attivata. I dati sono stati caricati nel modulo.", "info");
+  // Mostra il bottone "Annulla"
+  document.getElementById("cancelEditBtn").style.display = "block";
 }
 
 // --- 4. SCOPE  ROUTER ---
@@ -436,7 +653,7 @@ document.getElementById("loadToolsBtn").addEventListener("click", async () => {
 
   if (isToolsListVisible) {
     toolsList.innerHTML = "";
-    btn.innerText = "Mostra Tools Registrati 🔽";
+    btn.innerText = "🔽Mostra Tools Registrati ";
     isToolsListVisible = false;
   } else {
     await loadTools();
@@ -764,3 +981,162 @@ document.querySelectorAll('#scopeDropdownMenu input[type="checkbox"]').forEach(c
     updateIOMenus();
   });
 });
+
+function resetFormAfterSave() {
+  // Pulisce testi
+  document.querySelectorAll("input[type='text']:not([readonly]), input[type='url'], textarea").forEach(el => el.value = "");
+  document.getElementById("newToolId").value = ""; 
+  
+  // Pulisce e resetta checkbox
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => {
+      cb.checked = false;
+      cb.dispatchEvent(new Event('change')); // Toglie le dipendenze sbloccate in I/O
+  });
+  
+  // Pulisce le select
+  document.querySelectorAll("select").forEach(el => el.selectedIndex = 0);
+  
+  // Ripristina l'estetica dei menu a tendina
+  document.getElementById("scopeDropdownBtn").innerText = "Seleziona Scope (Settore) * ▼";
+  
+  const capsBtn = document.getElementById("capsDropdownBtn");
+  capsBtn.innerText = "Seleziona prima uno Scope...";
+  capsBtn.style.background = "#f8fafc";
+  capsBtn.style.color = "var(--muted)";
+  capsBtn.style.cursor = "not-allowed";
+  
+  // RESET DELLO STATO GLOBALE
+  editingToolId = null;
+  editingToolVersion = "1.0.0";
+  
+  // Ripristina il bottone di salvataggio
+  const submitBtn = document.getElementById("createToolBtn");
+  submitBtn.innerText = "+ Aggiungi Tool";
+  submitBtn.style.background = "#10b981"; // Torna verde
+  // Nasconde il bottone "Annulla"
+  document.getElementById("cancelEditBtn").style.display = "none";
+}
+
+document.getElementById("cancelEditBtn").addEventListener("click", () => {
+  resetFormAfterSave();
+  showToast("Modifica annullata. Puoi inserire un nuovo tool.", "info");
+});
+
+// --- FUNZIONE PER AGGIUNGERE UNA NUOVA VERSIONE AL REGISTRY ---
+async function addNewVersion(toolId) {
+  const tool = currentTools.find(t => t.id === toolId);
+  if (!tool) return;
+
+  // 1. Chiedi il nuovo endpoint all'utente tramite prompt
+  const newEndpoint = prompt(`Inserisci il nuovo endpoint per la versione successiva di ${tool.name}:`, tool.endpoint);
+  
+  // Se l'utente annulla o lascia vuoto, interrompi
+  if (!newEndpoint || newEndpoint.trim() === "") return;
+  
+  // 2. Validazione e formattazione base dell'URL
+  let validEndpoint = newEndpoint.trim().toLowerCase();
+  if (!validEndpoint.startsWith("http://") && !validEndpoint.startsWith("https://")) {
+    validEndpoint = "http://" + validEndpoint;
+  }
+
+  try {
+    new URL(validEndpoint);
+  } catch (err) {
+    showToast("L'Endpoint inserito non è un URL valido.", "error");
+    return;
+  }
+
+  try {
+    // 3. Calcolo delle versioni
+    const currentVersion = tool.version || "1.0.0";
+    const newVersion = getNextMajorVersion(currentVersion);
+    
+    // Rimuove eventuali suffissi di versione preesistenti (es: _1.0.0) per trovare l'ID "pulito"
+    const baseId = tool.id.replace(/_\d+\.\d+\.\d+$/, "");
+    
+    const oldVersionId = `${baseId}_${currentVersion}`;
+    const newVersionId = `${baseId}_${newVersion}`;
+
+    // 4. AGGIORNAMENTO VECCHIO TOOL (Se l'ID originale NON aveva il suffisso)
+    if (tool.id !== oldVersionId) {
+      const updatedOldTool = { ...tool, id: oldVersionId };
+      
+      // Crea il vecchio tool con il nuovo ID suffissato
+      await fetch(`${API_BASE}/registry/tools`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedOldTool)
+      });
+      
+      // Elimina quello vecchio senza suffisso (per mantenere pulito il database)
+      await fetch(`${API_BASE}/registry/tools/${tool.id}`, { method: "DELETE" });
+    }
+
+    // 5. CREAZIONE NUOVO TOOL (con nuova versione, nuovo ID e nuovo endpoint)
+    const newTool = { 
+      ...tool, 
+      id: newVersionId, 
+      version: newVersion, 
+      endpoint: validEndpoint 
+    };
+    
+    const res = await fetch(`${API_BASE}/registry/tools`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newTool)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showToast("Errore dal server: " + (err.detail || "Impossibile creare la versione"), "error");
+      return;
+    }
+
+    showToast(`Nuova versione ${newVersion} aggiunta con successo al Registry!`, "success");
+    loadTools(); // Ricarica la lista per mostrare entrambi i tool
+    
+  } catch (error) {
+    showToast("Errore di connessione al server.", "error");
+  }
+}
+
+// --- HELPER: Genera il codice HTML della singola Card del Tool ---
+// --- HELPER: Genera il codice HTML della singola Card del Tool ---
+function getToolCardHTML(tool) {
+  const tags = tool.scope_tags && tool.scope_tags.length > 0 ? tool.scope_tags.join(', ') : '';
+  const caps = tool.capabilities && tool.capabilities.length > 0 ? tool.capabilities.join(', ') : '';
+
+  return `
+    <div style="float: right; text-align: right; margin-left: 10px;">
+      <span style="background: #e2e8f0; font-size: 0.75em; padding: 2px 6px; border-radius: 10px; display: inline-block; margin-bottom: 6px;">
+        Owner: ${tool.owner || 'N/A'}
+      </span><br>
+      <span style="background: #e2e8f0; font-size: 0.75em; padding: 2px 6px; border-radius: 10px; display: inline-block;">
+        Version: ${tool.version || '1.0.0'}
+      </span>
+    </div>
+
+    <strong>${tool.name}</strong> <span style="color: var(--muted); font-size: 0.9em;">(${tool.id})</span> 
+    <br> 
+    <span style="color: var(--text); font-size: 0.9em;">${tool.description || ''}</span>
+    <br>
+    <span style="color: #3b82f6; font-size: 0.8em;"><strong>Scopes:</strong> [${tags}]</span> | 
+    <span style="color: #8b5cf6; font-size: 0.8em;"><strong>Capabilities:</strong> [${caps}]</span>
+    
+    <!-- CONTENITORE PULSANTI (Flexbox a due colonne 50-50) -->
+    <div style="display: flex; gap: 15px; width: 100%; margin-top: 12px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+      
+      <!-- Colonna Sinistra (Prende il 50% dello spazio grazie a flex: 1) -->
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+        <button onclick="updateTool('${tool.id}')" style="background: #f59e0b; color: white; padding: 8px 14px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer; width: 100%;">🔧 Modifica</button>
+        <button onclick="deleteTool('${tool.id}')" style="background: #ef4444; color: white; padding: 8px 14px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer; width: 100%;">❌ Elimina</button>
+      </div>
+
+      <!-- Colonna Destra (Prende l'altro 50% dello spazio) -->
+      <div class="right-actions" style="flex: 1; display: flex; flex-direction: column; gap: 8px; align-items: stretch;">
+        <button onclick="addNewVersion('${tool.id}')" style="background: #8b5cf6; color: white; padding: 8px 14px; font-size: 0.85em; border: none; border-radius: 4px; cursor: pointer; width: 100%;">➕ Aggiungi Nuova Versione</button>
+      </div>
+
+    </div>
+  `;
+}

@@ -32,8 +32,8 @@
       gap: 12px;
       opacity: 0;
       transform: translateX(120%);
-      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Effetto rimbalzo */
-    }
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 4); /* Effetto rimbalzo */
+ }
     
     .toast.show {
       opacity: 1;
@@ -111,7 +111,7 @@
       <h2>📑 Tool Registry</h2>
       <p class="subtitle">Mostra i tool attualmente caricati nel backend.</p>
       
-      <button id="loadToolsBtn" style="background: #3b82f6; margin-bottom: 15px;">Mostra Tools Registrati 🔽</button>
+      <button id="loadToolsBtn" style="background: #3b82f6; margin-bottom: 15px;">🔽Mostra Tools Registrati </button>
       <ul id="toolsList" style="margin-top: 0;"></ul>
 
       <hr style="margin: 24px 0; border: 0; border-top: 1px solid var(--border, #e2e8f0);" />
@@ -213,8 +213,10 @@
         * I campi contrassegnati dall'asterisco sono obbligatori.
       </p>
 
-      <button id="createToolBtn" style="background: #10b981;">+ Aggiungi Tool</button>
-      
+<div style="display: flex; gap: 12px; margin-top: 8px;">
+  <button id="cancelEditBtn" style="background: #64748b; color: white; display: none; flex: 1;">❌ Annulla Modifica</button>
+  <button id="createToolBtn" style="background: #10b981; flex: 2;">+ Aggiungi Tool</button>
+</div>      
     </section>
 
     <!-- 2. SEZIONE SCOPE ROUTER -->

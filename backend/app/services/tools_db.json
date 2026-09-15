@@ -92,10 +92,10 @@
         "owner": "lab"
     },
     {
-        "id": "tes11",
-        "name": "tes11",
-        "description": "",
-        "version": "0.1.0",
+        "id": "tes11_0.2.0",
+        "name": "casa 1",
+        "description": "ciao",
+        "version": "0.2.0",
         "scope_tags": [
             "vision"
         ],
@@ -111,5 +111,68 @@
         "endpoint": "https://a",
         "status": "active",
         "owner": "lab"
+    },
+    {
+        "id": "tes11_1.0.0",
+        "name": "casa 1",
+        "description": "ciao",
+        "version": "1.0.0",
+        "scope_tags": [
+            "vision"
+        ],
+        "capabilities": [
+            "classify_image"
+        ],
+        "input_schema": {
+            "type": "any"
+        },
+        "output_schema": {
+            "type": "any"
+        },
+        "endpoint": "https://abc",
+        "status": "active",
+        "owner": "lab"
+    },
+    {
+        "id": "test-1_1.0.0",
+        "name": "test 1",
+        "description": "descrizione test",
+        "version": "1.0.0",
+        "scope_tags": [
+            "classification"
+        ],
+        "capabilities": [
+            "return_top_label"
+        ],
+        "input_schema": {
+            "type": "text"
+        },
+        "output_schema": {
+            "type": "label"
+        },
+        "endpoint": "http://endpoint.com",
+        "status": "active",
+        "owner": "<sconosciuto>"
+    },
+    {
+        "id": "test-1_2.0.0",
+        "name": "test 1",
+        "description": "descrizione test",
+        "version": "2.0.0",
+        "scope_tags": [
+            "classification"
+        ],
+        "capabilities": [
+            "return_top_label"
+        ],
+        "input_schema": {
+            "type": "text"
+        },
+        "output_schema": {
+            "type": "label"
+        },
+        "endpoint": "http://endpoint1.com",
+        "status": "active",
+        "owner": "<sconosciuto>"
     }
 ]
