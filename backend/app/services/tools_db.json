@@ -92,48 +92,6 @@
         "owner": "lab"
     },
     {
-        "id": "tes11_0.2.0",
-        "name": "casa 1",
-        "description": "ciao",
-        "version": "0.2.0",
-        "scope_tags": [
-            "vision"
-        ],
-        "capabilities": [
-            "classify_image"
-        ],
-        "input_schema": {
-            "type": "any"
-        },
-        "output_schema": {
-            "type": "any"
-        },
-        "endpoint": "https://a",
-        "status": "active",
-        "owner": "lab"
-    },
-    {
-        "id": "tes11_1.0.0",
-        "name": "casa 1",
-        "description": "ciao",
-        "version": "1.0.0",
-        "scope_tags": [
-            "vision"
-        ],
-        "capabilities": [
-            "classify_image"
-        ],
-        "input_schema": {
-            "type": "any"
-        },
-        "output_schema": {
-            "type": "any"
-        },
-        "endpoint": "https://abc",
-        "status": "active",
-        "owner": "lab"
-    },
-    {
         "id": "test-1_1.0.0",
         "name": "test 1",
         "description": "descrizione test",
@@ -174,5 +132,47 @@
         "endpoint": "http://endpoint1.com",
         "status": "active",
         "owner": "<sconosciuto>"
+    },
+    {
+        "id": "nuovo-1-modifica_1.1.0",
+        "name": "nuovo 1 modifica",
+        "description": "ciao",
+        "version": "1.1.0",
+        "scope_tags": [
+            "ocr"
+        ],
+        "capabilities": [
+            "recognize_characters"
+        ],
+        "input_schema": {
+            "type": "image_or_pdf"
+        },
+        "output_schema": {
+            "type": "text"
+        },
+        "endpoint": "https://io.c",
+        "status": "active",
+        "owner": "io"
+    },
+    {
+        "id": "nuovo-1-modifica_2.0.0",
+        "name": "nuovo 1 modifica",
+        "description": "ciao",
+        "version": "2.0.0",
+        "scope_tags": [
+            "ocr"
+        ],
+        "capabilities": [
+            "recognize_characters"
+        ],
+        "input_schema": {
+            "type": "image_or_pdf"
+        },
+        "output_schema": {
+            "type": "text"
+        },
+        "endpoint": "https://io.c",
+        "status": "active",
+        "owner": "io"
     }
 ]
