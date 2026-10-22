@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # 1. Il backend principale (Registry)
+  backend-registry:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # 2. Il server per l'analisi del Sentiment
+  backend-tool-server:
+    build: ./backend_tool_server
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  # 3. Il router neurale per lo scope
+  backend-scope-router:
+    build: ./backend_scope_router
+    ports:
+      - "8002:8002"
+    restart: unless-stopped
+
+  # 4. L'interfaccia utente
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-registry
+      - backend-tool-server
+      - backend-scope-router
+    restart: unless-stopped
