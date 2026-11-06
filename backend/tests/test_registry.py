@@ -51,7 +51,6 @@ def test_update_tool():
     # 3. Pulizia
     client.delete("/api/registry/tools/test-tool-update")
 def test_read_all_tools():
-    # Nota il prefisso corretto!
     response = client.get("/api/registry/tools")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
@@ -65,12 +64,10 @@ def test_create_and_delete_tool():
         "status": "active"
     }
     
-    # Nota il prefisso corretto!
     post_response = client.post("/api/registry/tools", json=mock_tool)
     assert post_response.status_code == 200
     assert post_response.json()["id"] == "test-tool-99"
     
-    # Nota il prefisso corretto!
     delete_response = client.delete("/api/registry/tools/test-tool-99")
     assert delete_response.status_code == 200
     assert delete_response.json()["id"] == "test-tool-99"
